@@ -2,8 +2,15 @@
 <html lang="tr">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Türkiye Harita Oyunu - Ansiklopedi Modu</title>
+    <!-- TAM EKRAN VE MOBİL UYUMLULUK KODLARI -->
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="theme-color" content="#2c3e50">
+
+    <title>Türkiye Harita Oyunu - Tam Ekran</title>
+    <!-- Konfeti Kütüphanesi -->
     <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
     <style>
         * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
@@ -11,12 +18,15 @@
         body {
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
             margin: 0; padding: 0;
-            height: 100vh; width: 100vw;
+            /* 100dvh: Adres çubuklarını yok sayan dinamik yükseklik */
+            height: 100vh; height: 100dvh; 
+            width: 100vw;
             overflow: hidden; user-select: none;
             background-color: #2c3e50;
+            position: fixed; /* Sayfanın kaymasını engeller */
         }
 
-        /* --- HARİTA --- */
+        /* --- HARİTA ALANI --- */
         #map-container {
             width: 100%; height: 100%;
             position: absolute; top: 0; left: 0;
@@ -26,35 +36,62 @@
         }
         #map-container:active { cursor: grabbing; }
 
-        svg { width: 100%; height: 100%; display: block; object-fit: contain; filter: drop-shadow(0px 5px 15px rgba(0,0,0,0.3)); touch-action: none; }
+        svg { 
+            width: 100%; height: 100%; 
+            display: block; object-fit: contain;
+            filter: drop-shadow(0px 5px 15px rgba(0,0,0,0.3));
+            touch-action: none;
+        }
 
-        g#features path { fill: #ecf0f1 !important; stroke: #7f8c8d; stroke-width: 1px; stroke-linejoin: round; transition: fill 0.2s; cursor: pointer; }
-        g#features path:hover { fill: #f1c40f !important; stroke: #d35400; stroke-width: 2px; z-index: 100; transform: translateY(-2px); }
+        /* --- ŞEHİR STİLLERİ --- */
+        g#features path {
+            fill: #ecf0f1 !important; 
+            stroke: #7f8c8d; stroke-width: 1px; stroke-linejoin: round;
+            transition: fill 0.2s; cursor: pointer;
+        }
+        g#features path:hover {
+            fill: #f1c40f !important; stroke: #d35400; stroke-width: 2px;
+            z-index: 100; transform: translateY(-2px);
+        }
         g#features path.correct { fill: #27ae60 !important; stroke: #145a32 !important; pointer-events: none; }
         g#features path.wrong { fill: #c0392b !important; animation: shake 0.4s; }
         g#features path.revealed { fill: #e67e22 !important; stroke: #d35400 !important; pointer-events: none; }
 
+        /* HARİTA ÜZERİNDEKİ YAZILAR */
         text.map-label {
             font-family: 'Arial Black', sans-serif; font-size: 11px; font-weight: 900;
             fill: #2c3e50; pointer-events: none; text-anchor: middle; dominant-baseline: middle;
             stroke: rgba(255, 255, 255, 0.9); stroke-width: 3px; paint-order: stroke;
         }
+
         circle, g[id="points"], g[id="label_points"] { display: none !important; pointer-events: none; }
 
         /* --- ARAYÜZ (HUD) --- */
         #ui-layer { position: absolute; top: 0; left: 0; width: 100%; height: 100%; z-index: 50; pointer-events: none; }
         #ui-layer > * { pointer-events: auto; }
 
+        /* SOL ÜST */
         #hud-left {
             position: absolute; top: 15px; left: 15px;
-            background: rgba(255, 255, 255, 0.95); padding: 8px 15px; border-radius: 15px;
+            background: rgba(255, 255, 255, 0.95);
+            padding: 8px 15px; border-radius: 15px;
             border: 3px solid #fff; box-shadow: 0 4px 10px rgba(0,0,0,0.2);
-            max-width: 40%; min-width: 140px; display: flex; flex-direction: column; justify-content: center;
+            max-width: 40%; min-width: 140px;
+            display: flex; flex-direction: column; justify-content: center;
+            /* Çentikli telefonlar için güvenli alan */
+            margin-top: env(safe-area-inset-top); 
+            margin-left: env(safe-area-inset-left);
         }
         #q-prefix { font-size: 0.7rem; color: #7f8c8d; font-weight: 800; margin-bottom: 2px; }
         #target-city { color: #c0392b; font-size: 1.2rem; font-weight: 900; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 
-        #hud-right { position: absolute; top: 15px; right: 15px; display: flex; flex-direction: column; gap: 8px; align-items: flex-end; }
+        /* SAĞ ÜST */
+        #hud-right {
+            position: absolute; top: 15px; right: 15px;
+            display: flex; flex-direction: column; gap: 8px; align-items: flex-end;
+            margin-top: env(safe-area-inset-top);
+            margin-right: env(safe-area-inset-right);
+        }
         .stats-group {
             background: rgba(255, 255, 255, 0.95); padding: 6px 10px; border-radius: 12px;
             box-shadow: 0 4px 10px rgba(0,0,0,0.2); display: flex; gap: 10px; border: 2px solid #fff;
@@ -76,12 +113,13 @@
 
         /* --- TOAST & MODAL --- */
         #info-toast {
-            position: absolute; bottom: 30px; left: 50%; transform: translateX(-50%);
+            position: absolute; bottom: 40px; left: 50%; transform: translateX(-50%);
             background: linear-gradient(135deg, #2ecc71, #27ae60);
             color: white; padding: 12px 30px; border-radius: 30px; font-weight: bold; font-size: 1.1rem;
             box-shadow: 0 5px 20px rgba(0,0,0,0.4); display: none; align-items: center; gap: 10px;
             cursor: pointer; z-index: 200; border: 2px solid rgba(255,255,255,0.8);
             animation: slideUp 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275); pointer-events: auto;
+            margin-bottom: env(safe-area-inset-bottom);
         }
 
         #info-modal {
@@ -105,7 +143,6 @@
         }
         .card-body { padding: 20px; color: #34495e; text-align: left; }
         .info-row { display: flex; align-items: center; margin-bottom: 12px; border-bottom: 1px solid #f1f2f6; padding-bottom: 8px; }
-        .info-row:last-child { border: none; }
         .info-icon { font-size: 1.4rem; margin-right: 15px; width: 30px; text-align: center; }
         .info-content { display: flex; flex-direction: column; width: 100%; }
         .info-label { font-size: 0.75rem; color: #7f8c8d; font-weight: bold; text-transform: uppercase; }
@@ -255,7 +292,7 @@
                 <g id="features">
                     <!-- !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!! -->
                     <!-- BURAYA ELİNDEKİ SVG KODUNUN TAMAMINI YAPIŞTIR -->
-                    <svg baseprofile="tiny" fill="#6f9c76" height="422" stroke="#ffffff" stroke-linecap="round" stroke-linejoin="round" stroke-width=".5" version="1.2" viewbox="0 0 1000 422" width="1000" xmlns="http://www.w3.org/2000/svg">
+                   <svg baseprofile="tiny" fill="#6f9c76" height="422" stroke="#ffffff" stroke-linecap="round" stroke-linejoin="round" stroke-width=".5" version="1.2" viewbox="0 0 1000 422" width="1000" xmlns="http://www.w3.org/2000/svg">
  <g id="features">
   <path d="M889.7 82.2l-3.1 1.1-4.8 2.7-7.7 3.3-7.8 3.3-5.7 3-1.1 4.8-0.7 7.5-0.9 4.5-5.7 0.6-5.5 1.1-1.4-2.6-1.9-1.9-1.4-2.1-1-2.4-1.3-1.7-1.8-1.2-2.4-3.7-1-4.9 3-5.9 4.1-4.6 4-2 1.2-4.2-1.3-4.4-0.9-2.3-0.4-0.7-0.5-1.5-0.3-2.7-0.7-3.6 0.5 0 1-0.7 1.4-2.2 1.1-1 0.5-1.1 0.4-2.6 0.5-1 0.9-0.8 0.1 0 0.2 0 0.9-0.4 2.4-0.2 6.7 0.6 0.9 0.4-0.4 0.6-0.1 0.7-0.1 0.6-0.2 0.6-0.4 0.4-1 0.8-0.4 0.7 1.3 0.7 0.9 1 0.9 0.3 1.1-1.4 0.7-0.4 0.3 0.4 0.3 0.8 0.4 0.7 0.3 0.3 1.4 0.4 0.3 0.3 0.2 0.3 0.2 0.2 0.5 0.2 0.3 0.4 1.4 2.7 0.7 0.8 3.5 2.4 2.3 2 1.5 0.7 1.4 0.2 0 0.3-0.6 0.9-0.7 0.6-2.6 1.3 1.3 0.4 1.1-0.1 0.9 0.1 1 1.1 1.1 2.8 0.7 0.5 4.4-1.2 1.3-0.1 1.5 0.4 1.3 0.8 1.3 1.2 0.7 1.5-0.5 1.6z" id="TR75" name="Ardahan">
   </path>
@@ -597,7 +634,8 @@
                 </g>
                 <g id="points"></g>
                 <g id="label_points"></g>
-                <g id="map-labels" style="pointer-events: none;"></g>
+                
+                <!-- Harita üzerindeki yazılar -->
                 <g id="map-overlays" style="pointer-events: none;"></g>
             </g>
         </svg>
@@ -749,8 +787,14 @@
             parseMapData();
             setupMapInteractions();
             updateStartScreenScores();
+            
+            // Otomatik tam ekran tetikleme (Tarayıcı izin verirse)
+            if (document.documentElement.requestFullscreen) {
+                document.documentElement.requestFullscreen().catch(() => {});
+            }
         });
 
+        // --- SES MOTORU ---
         function playSound(type) {
             if (!soundEnabled) return;
             if (audioCtx.state === 'suspended') audioCtx.resume();
