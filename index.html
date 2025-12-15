@@ -2,9 +2,11 @@
 <html lang="tr">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Türkiye Harita Oyunu - Pro Sürüm</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Türkiye Harita Oyunu</title>
     <style>
+        * { box-sizing: border-box; }
+        
         body {
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
             background-color: #f0f8ff;
@@ -12,19 +14,22 @@
             flex-direction: column;
             align-items: center;
             margin: 0;
-            padding: 20px;
+            padding: 10px;
             user-select: none;
+            height: 100vh; /* Tam ekran yüksekliği */
+            overflow: hidden; /* Kaydırmayı engelle */
         }
 
         h1 { 
             color: #2c3e50; 
-            margin-bottom: 5px; 
+            margin: 5px 0; 
+            font-size: 1.5rem;
         }
 
         .signature {
-            font-size: 0.9rem;
+            font-size: 0.8rem;
             color: #7f8c8d;
-            margin-bottom: 20px;
+            margin-bottom: 10px;
             font-weight: bold;
             letter-spacing: 1px;
             text-transform: uppercase;
@@ -33,43 +38,88 @@
         /* OYUN PANELİ */
         #game-panel {
             background: white;
-            padding: 20px 30px;
-            border-radius: 20px;
-            box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+            padding: 10px 20px;
+            border-radius: 15px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
             display: none;
-            flex-direction: column;
+            flex-direction: row; /* Yan yana dizilsin */
             gap: 15px;
-            margin-bottom: 20px;
-            font-size: 1.2rem;
+            margin-bottom: 10px;
+            font-size: 1rem;
             font-weight: bold;
             align-items: center;
-            text-align: center;
-            width: 90%;
-            max-width: 800px;
-        }
-
-        .info-row {
-            display: flex;
-            gap: 20px;
-            justify-content: center;
+            justify-content: space-between;
             width: 100%;
+            max-width: 1000px;
+            z-index: 10;
         }
 
         .target { 
             color: #e74c3c; 
-            font-size: 1.8rem; /* Soru daha büyük görünsün */
+            font-size: 1.2rem; 
             background: #fad390;
-            padding: 15px 20px;
-            border-radius: 10px;
+            padding: 5px 15px;
+            border-radius: 8px;
+            white-space: nowrap; /* Alt satıra geçmesin */
+            overflow: hidden;
+            text-overflow: ellipsis;
+            max-width: 400px;
+        }
+        
+        .info-group {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .score { color: #27ae60; font-size: 1.2rem; white-space: nowrap; }
+
+        /* BUTONLAR */
+        button.game-btn {
+            border: none;
+            padding: 8px 12px;
+            border-radius: 8px;
+            font-size: 0.9rem;
+            cursor: pointer;
+            font-weight: bold;
+            transition: 0.3s;
+            color: white;
+            white-space: nowrap;
+        }
+
+        #hint-btn { background-color: #f39c12; }
+        #reset-btn { background-color: #95a5a6; }
+
+        #message {
+            font-size: 1.1rem;
+            height: 25px;
+            margin-bottom: 5px;
+            font-weight: 600;
+            color: #333;
+            text-align: center;
+        }
+
+        /* HARİTA KUTUSU */
+        #map-container {
             width: 100%;
-            min-height: 60px;
+            max-width: 1100px;
+            flex-grow: 1; /* Kalan tüm boşluğu kapla */
+            position: relative;
+            background: #b8e994;
+            border-radius: 10px;
+            border: 3px solid #78e08f;
+            overflow: hidden;
             display: flex;
             align-items: center;
             justify-content: center;
-            box-shadow: inset 0 0 10px rgba(0,0,0,0.05);
         }
-        
-        .score { color: #27ae60; font-size: 1.5rem; }
+
+        svg { 
+            width: 100%; 
+            height: 100%; 
+            display: block; 
+            max-height: 80vh; /* Ekranı taşırmasın */
+        }
 
         /* GİRİŞ EKRANI */
         #start-screen {
@@ -84,9 +134,6 @@
             color: white;
         }
 
-        #start-screen h2 { font-size: 2.5rem; margin-bottom: 10px; text-shadow: 2px 2px 4px #000; }
-        #start-screen .signature { color: #bdc3c7; margin-bottom: 40px; }
-
         .mode-container {
             display: flex;
             flex-wrap: wrap;
@@ -98,61 +145,49 @@
             background: #3498db;
             color: white;
             border: none;
-            padding: 20px 30px;
-            border-radius: 15px;
-            font-size: 1.3rem;
-            cursor: pointer;
-            transition: 0.3s;
-            width: 280px;
+            padding: 15px 30px;
+            border-radius: 10px;
+            font-size: 1.2rem;
             font-weight: bold;
-            box-shadow: 0 5px 0 #2980b9;
-        }
-
-        .mode-btn:active { transform: translateY(4px); box-shadow: none; }
-        .mode-btn.plate { background: #e67e22; box-shadow: 0 5px 0 #d35400; }
-        .mode-btn.famous { background: #9b59b6; box-shadow: 0 5px 0 #8e44ad; }
-
-        /* BUTONLAR */
-        .controls { display: flex; gap: 10px; }
-        button.game-btn {
-            border: none;
-            padding: 10px 20px;
-            border-radius: 20px;
-            font-size: 1rem;
             cursor: pointer;
-            font-weight: bold;
-            transition: 0.3s;
-            color: white;
+            width: 200px;
+        }
+        .mode-btn.plate { background: #e67e22; }
+        .mode-btn.famous { background: #9b59b6; }
+
+        /* --- MOBİL YATAY MOD (LANDSCAPE) ÖZEL AYARLARI --- */
+        @media screen and (max-height: 500px) and (orientation: landscape) {
+            body { padding: 5px; }
+            
+            /* Başlık ve İmzayı Gizle (Yer kazanalım) */
+            h1, .signature { display: none; } 
+
+            /* Üst paneli çok ince yap */
+            #game-panel {
+                padding: 5px 15px;
+                margin-bottom: 5px;
+                gap: 10px;
+            }
+
+            .target { font-size: 1rem; padding: 2px 10px; }
+            .score { font-size: 1rem; }
+            
+            /* Butonları küçült */
+            button.game-btn {
+                padding: 5px 8px;
+                font-size: 0.8rem;
+            }
+
+            #message { height: 20px; font-size: 0.9rem; margin-bottom: 2px; }
+
+            /* Haritayı ekrana tam sığdır */
+            #map-container {
+                border-width: 2px;
+                height: 85vh; /* Yüksekliği zorla */
+            }
         }
 
-        #hint-btn { background-color: #f39c12; }
-        #hint-btn:hover { background-color: #d35400; transform: scale(1.05); }
-
-        #reset-btn { background-color: #95a5a6; }
-        #reset-btn:hover { background-color: #7f8c8d; transform: scale(1.05); }
-
-        #message {
-            font-size: 1.3rem;
-            height: 30px;
-            margin-bottom: 10px;
-            font-weight: 600;
-            color: #333;
-        }
-
-        /* HARİTA */
-        #map-container {
-            width: 100%;
-            max-width: 1100px;
-            position: relative;
-            background: #b8e994;
-            border-radius: 15px;
-            border: 5px solid #78e08f;
-            overflow: hidden;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
-        }
-
-        svg { width: 100%; height: auto; display: block; }
-
+        /* SVG PATH STİLLERİ */
         path {
             fill: #ecf0f1;
             stroke: #7f8c8d;
@@ -160,73 +195,21 @@
             transition: all 0.2s ease;
             cursor: pointer;
         }
-
-        path:hover {
-            fill: #3498db;
-            stroke: #2980b9;
-            stroke-width: 2px;
-            transform: translateY(-2px);
-            z-index: 100;
-        }
-
-        path.correct { fill: #2ecc71 !important; stroke: #27ae60 !important; pointer-events: none; }
-        path.wrong { fill: #e74c3c !important; animation: shake 0.4s ease-in-out; }
+        path:hover { fill: #3498db; stroke: #2980b9; stroke-width: 1px; z-index: 100; }
+        path.correct { fill: #2ecc71 !important; pointer-events: none; }
+        path.wrong { fill: #e74c3c !important; animation: shake 0.4s; }
         path.revealed { fill: #f39c12 !important; pointer-events: none; }
-
         circle, text, g[id="points"], g[id="label_points"] { display: none; pointer-events: none; }
 
-        @keyframes shake {
-            0%, 100% { transform: translateX(0); }
-            25% { transform: translateX(-5px); }
-            75% { transform: translateX(5px); }
-        }
-      /* MOBİL CİHAZLAR İÇİN ÖZEL AYARLAR */
-        @media screen and (max-width: 768px) {
-            body { padding: 10px; }
-            
-            /* Başlık küçülsün */
-            h1 { font-size: 1.5rem; }
-            
-            /* Oyun paneli daha kompakt olsun */
-            #game-panel {
-                padding: 10px;
-                width: 100%;
-                gap: 10px;
-            }
-            
-            /* Soru yazısı biraz küçülsün */
-            .target { font-size: 1.2rem; padding: 10px; min-height: 40px; }
-            
-            /* Butonlar mobilde daha büyük olsun (Parmakla basmak için) */
-            button.game-btn, .mode-btn {
-                width: 100%; /* Ekranı kaplasın */
-                padding: 15px;
-                font-size: 1.1rem;
-                margin: 5px 0;
-            }
-            
-            .controls {
-                flex-direction: column; /* Butonlar alt alta dizilsin */
-                width: 100%;
-            }
-
-            /* Harita mobilde daha yüksek olsun */
-            #map-container {
-                min-height: 300px; 
-            }
-            
-            /* Giriş ekranı butonları */
-            .mode-container { flex-direction: column; width: 80%; }
-        }
+        @keyframes shake { 0%, 100% { transform: translateX(0); } 25% { transform: translateX(-5px); } 75% { transform: translateX(5px); } }
     </style>
 </head>
 <body>
 
     <!-- GİRİŞ EKRANI -->
     <div id="start-screen">
-        <h2>🇹🇷 Şehir Bulma Oyunu </h2>
-        <div class="signature">by AYDNN</div>
-
+        <h2 style="margin-bottom: 20px;">🇹🇷 Harita Oyunu</h2>
+        <div class="signature" style="color: #bdc3c7; margin-bottom: 30px;">by AYDNN</div>
         <div class="mode-container">
             <button class="mode-btn" onclick="selectMode('name')">Şehir İsmi</button>
             <button class="mode-btn plate" onclick="selectMode('plate')">Plaka Kodu</button>
@@ -238,24 +221,18 @@
     <div class="signature">by AYDNN</div>
 
     <div id="game-panel">
-        <div class="target"><span id="target-city">...</span></div>
-        <div class="info-row">
+        <div class="target"><span id="question-label">Bul:</span> <span id="target-city">...</span></div>
+        <div class="info-group">
             <div class="score">Puan: <span id="score">0</span></div>
-            <div class="controls">
-                <button id="hint-btn" class="game-btn" onclick="useHint()">Pas Geç / Göster 💡</button>
-                <button id="reset-btn" class="game-btn" onclick="resetGame()">Menü 🏠</button>
-            </div>
+            <button id="hint-btn" class="game-btn" onclick="useHint()">Pas Geç</button>
+            <button id="reset-btn" class="game-btn" onclick="resetGame()">Menü</button>
         </div>
     </div>
 
     <div id="message"></div>
 
     <div id="map-container">
-        
-        <!-- ********************************************** -->
-        <!-- SVG KODUNU AŞAĞIYA YAPIŞTIR (features ve points dahil) -->
-        <!-- ********************************************** -->
-        
+        <!-- SVG KODUNU AŞAĞIYA YAPIŞTIR -->
         <svg baseprofile="tiny" fill="#6f9c76" height="422" stroke="#ffffff" stroke-linecap="round" stroke-linejoin="round" stroke-width=".5" version="1.2" viewbox="0 0 1000 422" width="1000" xmlns="http://www.w3.org/2000/svg">
             <g id="features">
                 <?xml version="1.0"?>
@@ -601,24 +578,17 @@
   <circle class="Gümüshane" cx="698.7" cy="135" id="TR29">
   </circle>
  </g>
-</svg>
-                <!-- BURAYA SVG İÇİNDEKİ TÜM PATH KODLARINI YAPIŞTIR -->
+</svg><!-- BURAYA SVG İÇİNDEKİ PATH KODLARINI YAPIŞTIR -->
                 <text x="50" y="50" font-size="20">Lütfen SVG Kodunu Buraya Yapıştırın</text>
-
             </g>
             <g id="points"></g>
             <g id="label_points"></g>
         </svg>
-
-        <!-- ********************************************** -->
         <!-- SVG BİTİŞİ -->
-        <!-- ********************************************** -->
-
     </div>
 
     <script>
-        // 81 İL İÇİN GENİŞLETİLMİŞ MEŞHUR ŞEYLER LİSTESİ (ARRAY FORMATINDA)
-        // Her şehir için birden fazla kelime tanımladık. Oyun her seferinde rastgele birini seçecek.
+        // İLLERİN MEŞHUR ÖZELLİKLERİ
         const cityFacts = {
             "TR01": ["Kebap", "Şalgam Suyu", "Pamuk", "Sıcak Hava", "Taş Köprü", "01", "Bici Bici", "Portakal Çiçeği Karnavalı", "Altın Koza"],
             "TR02": ["Nemrut Dağı", "Çiğ Köfte", "Güneşin Doğuşu", "Besni Üzümü", "Cendere Köprüsü", "Tütün", "Menzil", "Karakuş Tümülüsü"],
@@ -703,21 +673,19 @@
             "TR81": ["Şelaleler (Güzeldere)", "Tütün Kolonyası", "Akçakoca", "Rafting (Melen)", "Samandere", "Fındık"]
         };
 
-        // --- OYUN DEĞİŞKENLERİ ---
+        // --- OYUN MOTORU ---
         let cityData = [];
         let currentTarget = null;
         let score = 0;
         let foundCities = [];
-        let gameMode = 'name'; // Başlangıç modu
+        let gameMode = 'name';
 
         document.addEventListener("DOMContentLoaded", () => {
             parseMapData();
         });
 
-        // Haritayı oku ve verileri hazırla
         function parseMapData() {
             const paths = document.querySelectorAll('svg g[id="features"] path');
-            
             if (paths.length === 0) return;
 
             cityData = []; 
@@ -727,15 +695,13 @@
                 
                 if (name && id) {
                     const plateNumber = id.replace("TR", "");
-                    
-                    // Listeden o ile ait diziyi al, yoksa boş dizi ver
                     const factsList = cityFacts[id] || ["Bilgi Yok"];
                     
                     cityData.push({ 
                         id: id, 
                         name: name,
                         plate: plateNumber,
-                        factsList: factsList // Artık burası bir dizi (array)
+                        factsList: factsList
                     });
                     
                     path.addEventListener('click', handleCityClick);
@@ -743,15 +709,19 @@
             });
         }
 
-        // Mod Seçimi
         function selectMode(mode) {
             gameMode = mode;
             document.getElementById('start-screen').style.display = 'none';
             document.getElementById('game-panel').style.display = 'flex';
+            
+            const qLabel = document.getElementById('question-label');
+            if(mode === 'name') qLabel.textContent = "Şehri Bul:";
+            else if(mode === 'plate') qLabel.textContent = "Plakayı Bul:";
+            else qLabel.textContent = "Bu Neresi?";
+
             nextTurn();
         }
 
-        // Oyunu Sıfırla
         function resetGame() {
             score = 0;
             foundCities = [];
@@ -770,9 +740,7 @@
             document.getElementById('start-screen').style.display = 'flex';
         }
 
-        // Yeni Soru Getir
         function nextTurn() {
-            // Henüz bulunmamış şehirler
             const availableCities = cityData.filter(city => !foundCities.includes(city.id));
 
             if (availableCities.length === 0) {
@@ -780,19 +748,17 @@
                 return;
             }
 
-            // Rastgele şehir seç
             const randomIndex = Math.floor(Math.random() * availableCities.length);
             currentTarget = availableCities[randomIndex];
 
             const targetLabel = document.getElementById('target-city');
 
-            // MODA GÖRE SORUYU BELİRLE
             if (gameMode === 'name') {
-                targetLabel.textContent = currentTarget.name; // Şehir İsmi
+                targetLabel.textContent = currentTarget.name;
             } else if (gameMode === 'plate') {
-                targetLabel.textContent = currentTarget.plate; // Plaka
+                targetLabel.textContent = currentTarget.plate;
             } else {
-                // 'Neyi Meşhur' Modu: Listeden rastgele BİR özellik seç
+                // Rastgele bir özellik seç
                 const randomFact = currentTarget.factsList[Math.floor(Math.random() * currentTarget.factsList.length)];
                 targetLabel.textContent = randomFact;
             }
@@ -800,18 +766,15 @@
             document.getElementById('message').textContent = "";
         }
 
-        // Tıklama Kontrolü
         function handleCityClick(e) {
             const clickedElement = e.target;
             const clickedId = clickedElement.getAttribute('id');
             const clickedData = cityData.find(c => c.id === clickedId); 
 
-            // Eğer menü açıksa veya oyun bittiyse tıklama
             if (document.getElementById('start-screen').style.display === 'flex') return;
             if (!currentTarget || foundCities.includes(clickedId)) return;
 
             if (clickedId === currentTarget.id) {
-                // DOĞRU
                 score += 10;
                 document.getElementById('score').textContent = score;
                 document.getElementById('message').textContent = "Tebrikler! Doğru.";
@@ -822,9 +785,7 @@
 
                 setTimeout(nextTurn, 500);
             } else {
-                // YANLIŞ
                 let wrongMsg = `Yanlış! Orası: ${clickedData.name}`;
-                
                 if(gameMode === 'plate') {
                     wrongMsg += ` (${clickedData.plate})`;
                 }
@@ -839,7 +800,6 @@
             }
         }
 
-        // İpucu
         function useHint() {
             if (!currentTarget) return;
 
