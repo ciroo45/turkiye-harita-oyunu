@@ -3,239 +3,310 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Türkiye Harita Oyunu</title>
+    <title>Türkiye Harita Oyunu - Final v2</title>
     <style>
         * { box-sizing: border-box; }
-        
+
         body {
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background-color: #f0f8ff;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
             margin: 0;
-            padding: 10px;
-            user-select: none;
-            height: 100vh; /* Tam ekran yüksekliği */
-            overflow: hidden; /* Kaydırmayı engelle */
-        }
-
-        h1 { 
-            color: #2c3e50; 
-            margin: 5px 0; 
-            font-size: 1.5rem;
-        }
-
-        .signature {
-            font-size: 0.8rem;
-            color: #7f8c8d;
-            margin-bottom: 10px;
-            font-weight: bold;
-            letter-spacing: 1px;
-            text-transform: uppercase;
-        }
-
-        /* OYUN PANELİ */
-        #game-panel {
-            background: white;
-            padding: 10px 20px;
-            border-radius: 15px;
-            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
-            display: none;
-            flex-direction: row; /* Yan yana dizilsin */
-            gap: 15px;
-            margin-bottom: 10px;
-            font-size: 1rem;
-            font-weight: bold;
-            align-items: center;
-            justify-content: space-between;
-            width: 100%;
-            max-width: 1000px;
-            z-index: 10;
-        }
-
-        .target { 
-            color: #e74c3c; 
-            font-size: 1.2rem; 
-            background: #fad390;
-            padding: 5px 15px;
-            border-radius: 8px;
-            white-space: nowrap; /* Alt satıra geçmesin */
+            padding: 0;
+            height: 100vh;
+            width: 100vw;
             overflow: hidden;
-            text-overflow: ellipsis;
-            max-width: 400px;
-        }
-        
-        .info-group {
-            display: flex;
-            align-items: center;
-            gap: 10px;
+            user-select: none;
+            position: relative;
+            background-color: #2c3e50;
         }
 
-        .score { color: #27ae60; font-size: 1.2rem; white-space: nowrap; }
-
-        /* BUTONLAR */
-        button.game-btn {
-            border: none;
-            padding: 8px 12px;
-            border-radius: 8px;
-            font-size: 0.9rem;
-            cursor: pointer;
-            font-weight: bold;
-            transition: 0.3s;
-            color: white;
-            white-space: nowrap;
-        }
-
-        #hint-btn { background-color: #f39c12; }
-        #reset-btn { background-color: #95a5a6; }
-
-        #message {
-            font-size: 1.1rem;
-            height: 25px;
-            margin-bottom: 5px;
-            font-weight: 600;
-            color: #333;
-            text-align: center;
-        }
-
-        /* HARİTA KUTUSU */
+        /* --- HARİTA ALANI --- */
         #map-container {
             width: 100%;
-            max-width: 1100px;
-            flex-grow: 1; /* Kalan tüm boşluğu kapla */
-            position: relative;
-            background: #b8e994;
-            border-radius: 10px;
-            border: 3px solid #78e08f;
-            overflow: hidden;
+            height: 100%;
+            position: absolute;
+            top: 0; left: 0;
+            /* Deniz Görünümü */
+            background: radial-gradient(circle at center, #74b9ff 0%, #0984e3 100%);
             display: flex;
             align-items: center;
             justify-content: center;
+            z-index: 1;
         }
 
         svg { 
-            width: 100%; 
-            height: 100%; 
-            display: block; 
-            max-height: 80vh; /* Ekranı taşırmasın */
+            width: 100%; height: 100%; 
+            display: block; object-fit: contain;
+            filter: drop-shadow(0px 5px 15px rgba(0,0,0,0.3));
         }
 
-        /* GİRİŞ EKRANI */
-        #start-screen {
-            position: fixed;
-            top: 0; left: 0; width: 100%; height: 100%;
-            background: rgba(44, 62, 80, 0.98);
-            display: flex;
-            flex-direction: column;
-            justify-content: center;
-            align-items: center;
-            z-index: 999;
-            color: white;
-        }
-
-        .mode-container {
-            display: flex;
-            flex-wrap: wrap;
-            justify-content: center;
-            gap: 15px;
-        }
-
-        .mode-btn {
-            background: #3498db;
-            color: white;
-            border: none;
-            padding: 15px 30px;
-            border-radius: 10px;
-            font-size: 1.2rem;
-            font-weight: bold;
-            cursor: pointer;
-            width: 200px;
-        }
-        .mode-btn.plate { background: #e67e22; }
-        .mode-btn.famous { background: #9b59b6; }
-
-        /* --- MOBİL YATAY MOD (LANDSCAPE) ÖZEL AYARLARI --- */
-        @media screen and (max-height: 500px) and (orientation: landscape) {
-            body { padding: 5px; }
-            
-            /* Başlık ve İmzayı Gizle (Yer kazanalım) */
-            h1, .signature { display: none; } 
-
-            /* Üst paneli çok ince yap */
-            #game-panel {
-                padding: 5px 15px;
-                margin-bottom: 5px;
-                gap: 10px;
-            }
-
-            .target { font-size: 1rem; padding: 2px 10px; }
-            .score { font-size: 1rem; }
-            
-            /* Butonları küçült */
-            button.game-btn {
-                padding: 5px 8px;
-                font-size: 0.8rem;
-            }
-
-            #message { height: 20px; font-size: 0.9rem; margin-bottom: 2px; }
-
-            /* Haritayı ekrana tam sığdır */
-            #map-container {
-                border-width: 2px;
-                height: 85vh; /* Yüksekliği zorla */
-            }
-        }
-
-        /* SVG PATH STİLLERİ */
-        path {
-            fill: #ecf0f1;
+        /* --- ŞEHİR STİLLERİ --- */
+        /* Maraş ve diğerlerinin rengini zorla düzeltmek için fill kuralını güçlendirdik */
+        g#features path {
+            fill: #ecf0f1 !important; /* Tüm şehirler varsayılan gri/beyaz */
             stroke: #7f8c8d;
-            stroke-width: 0.5px;
+            stroke-width: 1.2px; /* Kalın sınırlar */
+            stroke-linejoin: round;
             transition: all 0.2s ease;
             cursor: pointer;
         }
-        path:hover { fill: #3498db; stroke: #2980b9; stroke-width: 1px; z-index: 100; }
-        path.correct { fill: #2ecc71 !important; pointer-events: none; }
-        path.wrong { fill: #e74c3c !important; animation: shake 0.4s; }
-        path.revealed { fill: #f39c12 !important; pointer-events: none; }
-        circle, text, g[id="points"], g[id="label_points"] { display: none; pointer-events: none; }
+
+        /* Mouse üzerine gelince */
+        g#features path:hover {
+            fill: #f1c40f !important; /* Sarı */
+            stroke: #d35400;
+            stroke-width: 2.5px;
+            z-index: 100;
+            transform: translateY(-2px);
+        }
+
+        /* OYUN DURUMLARI */
+        g#features path.correct { fill: #27ae60 !important; stroke: #145a32 !important; pointer-events: none; }
+        g#features path.wrong { fill: #e74c3c !important; animation: shake 0.4s; }
+        g#features path.revealed { fill: #e67e22 !important; stroke: #d35400 !important; pointer-events: none; }
+
+        /* HARİTA YAZILARI */
+        text.map-label {
+            font-family: 'Arial Black', sans-serif;
+            font-size: 11px;
+            font-weight: 900;
+            fill: #2c3e50;
+            pointer-events: none;
+            text-anchor: middle;
+            dominant-baseline: middle;
+            stroke: rgba(255, 255, 255, 0.95);
+            stroke-width: 3px;
+            paint-order: stroke;
+        }
+
+        /* GİZLENECEKLER */
+        circle, g[id="points"], g[id="label_points"] { display: none; pointer-events: none; }
+
+        /* --- ARAYÜZ KATMANI --- */
+        #ui-layer {
+            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+            z-index: 50; pointer-events: none;
+        }
+        #ui-layer > * { pointer-events: auto; }
+
+        /* 1. SOL PANEL: SORU (Kompakt ve Yukarıda) */
+        #left-hud {
+            position: absolute;
+            top: 10px; left: 10px; /* Daha yukarıda */
+            background: rgba(255, 255, 255, 0.95);
+            padding: 8px 15px; /* Daha az boşluk */
+            border-radius: 12px;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.2);
+            border: 2px solid #fff;
+            max-width: 45%; 
+            min-width: 150px;
+            display: flex; flex-direction: column; justify-content: center;
+        }
+        #q-prefix { 
+            font-size: 0.7rem; color: #7f8c8d; font-weight: 800; letter-spacing: 1px; margin-bottom: 2px;
+        }
+        #target-city { 
+            color: #c0392b; font-size: 1.2rem; font-weight: 900; line-height: 1.1;
+            white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+        }
+
+        /* 2. SAĞ PANEL: BUTONLAR VE SAYAÇLAR */
+        #right-hud {
+            position: absolute;
+            top: 10px; right: 10px;
+            display: flex; flex-direction: column; gap: 8px;
+            align-items: flex-end;
+        }
+
+        /* İstatistik Grubu */
+        .stats-group {
+            background: rgba(255, 255, 255, 0.95);
+            padding: 6px 10px;
+            border-radius: 12px;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.2);
+            display: flex; gap: 12px;
+            border: 2px solid #fff;
+        }
+        .stat-item { text-align: center; min-width: 30px; }
+        .stat-val { font-size: 1.1rem; font-weight: 900; display: block; }
+        .stat-lbl { font-size: 0.6rem; font-weight: bold; color: #95a5a6; display: block; margin-top: -2px;}
+        
+        .val-score { color: #27ae60; }
+        .val-wrong { color: #e74c3c; }
+        .val-timer { color: #e17055; font-size: 1.2rem; }
+
+        /* Buton Grubu */
+        .btn-group { display: flex; gap: 8px; }
+        .action-btn {
+            width: 45px; height: 45px;
+            border: none; border-radius: 12px;
+            font-size: 1.3rem; cursor: pointer; color: white;
+            box-shadow: 0 3px 8px rgba(0,0,0,0.3); transition: 0.1s;
+            display: flex; align-items: center; justify-content: center;
+            border: 2px solid rgba(255,255,255,0.3);
+        }
+        .action-btn:active { transform: scale(0.95); }
+        .btn-hint { background: #f39c12; }
+        .btn-menu { background: #95a5a6; }
+
+        /* --- GİRİŞ EKRANI --- */
+        #start-screen {
+            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(44, 62, 80, 1);
+            display: flex; flex-direction: column;
+            justify-content: center; align-items: center;
+            z-index: 1000; color: white;
+        }
+        .mode-container { display: flex; flex-wrap: wrap; justify-content: center; gap: 15px; max-width: 600px; }
+        .mode-btn {
+            background: #3498db; color: white; border: none;
+            padding: 18px; border-radius: 12px;
+            font-size: 1.1rem; font-weight: bold; cursor: pointer;
+            width: 240px; box-shadow: 0 5px 0 #2980b9; transition: 0.2s;
+        }
+        .mode-btn:active { transform: translateY(4px); box-shadow: none; }
+        .mode-btn.plate { background: #e67e22; box-shadow: 0 5px 0 #d35400; }
+        .mode-btn.famous { background: #9b59b6; box-shadow: 0 5px 0 #8e44ad; }
+        .mode-btn.karma { background: #e74c3c; box-shadow: 0 5px 0 #c0392b; width: 100%; max-width: 500px; }
+
+        /* --- OYUN SONU RAPORU --- */
+        #game-over-modal {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.9);
+            display: none; justify-content: center; align-items: center;
+            z-index: 200;
+        }
+        .report-card {
+            background: white; padding: 30px; border-radius: 25px;
+            text-align: center; width: 90%; max-width: 400px;
+            animation: popIn 0.5s; box-shadow: 0 10px 40px rgba(0,0,0,0.5);
+        }
+        .report-title { font-size: 2rem; color: #2c3e50; margin: 0 0 15px 0; }
+        .stat-row { display: flex; justify-content: space-between; margin: 10px 0; font-size: 1.1rem; border-bottom: 1px solid #eee; padding-bottom: 5px; }
+        
+        .grade-circle {
+            width: 80px; height: 80px; border-radius: 50%;
+            background: #2c3e50; color: #f1c40f;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 2.5rem; font-weight: 900; margin: 15px auto;
+            border: 4px solid #f1c40f;
+        }
+        .grade-label { color: #7f8c8d; font-size: 0.9rem; margin-bottom: 5px; }
+
+        /* YÜZEN MESAJ */
+        #feedback-overlay {
+            position: absolute; top: 50%; left: 50%;
+            transform: translate(-50%, -50%);
+            background: rgba(0,0,0,0.85); color: white;
+            padding: 15px 30px; border-radius: 50px;
+            font-size: 1.4rem; font-weight: bold;
+            pointer-events: none; opacity: 0; transition: opacity 0.3s;
+            z-index: 60; white-space: nowrap;
+        }
 
         @keyframes shake { 0%, 100% { transform: translateX(0); } 25% { transform: translateX(-5px); } 75% { transform: translateX(5px); } }
+        @keyframes popIn { from { transform: scale(0.5); opacity: 0; } to { transform: scale(1); opacity: 1; } }
+
+        /* MOBİL YATAY MOD (LANDSCAPE) OPTİMİZASYON */
+        @media screen and (max-height: 500px) and (orientation: landscape) {
+            #left-hud { top: 5px; left: 10px; padding: 5px 12px; }
+            #target-city { font-size: 1rem; }
+            #right-hud { top: 5px; right: 10px; gap: 5px; }
+            .action-btn { width: 40px; height: 40px; font-size: 1.1rem; }
+            .stats-group { padding: 4px 8px; }
+            .stat-val { font-size: 1rem; }
+            .stat-item { min-width: 25px; }
+        }
     </style>
 </head>
 <body>
 
     <!-- GİRİŞ EKRANI -->
     <div id="start-screen">
-        <h2 style="margin-bottom: 20px;">🇹🇷 Harita Oyunu</h2>
-        <div class="signature" style="color: #bdc3c7; margin-bottom: 30px;">by AYDNN</div>
+        <h2 style="margin-bottom: 10px;">🇹🇷 Harita Oyunu</h2>
+        <div style="color:#bdc3c7; margin-bottom:30px; font-size:0.9rem; letter-spacing:3px;">by AYDNN</div>
         <div class="mode-container">
-            <button class="mode-btn" onclick="selectMode('name')">Şehir İsmi</button>
-            <button class="mode-btn plate" onclick="selectMode('plate')">Plaka Kodu</button>
-            <button class="mode-btn famous" onclick="selectMode('famous')">Neyi Meşhur?</button>
+            <button class="mode-btn" onclick="startGame('name')">Şehir İsmi</button>
+            <button class="mode-btn plate" onclick="startGame('plate')">Plaka Kodu</button>
+            <button class="mode-btn famous" onclick="startGame('famous')">Neyi Meşhur?</button>
+            <button class="mode-btn karma" onclick="startGame('mixed')">⏱️ 1 Dakika / Karma</button>
         </div>
     </div>
 
-    <h1>📍 Harita Oyunu</h1>
-    <div class="signature">by AYDNN</div>
+    <!-- OYUN ARAYÜZÜ (AYRIK PANEL) -->
+    <div id="ui-layer" style="display:none;">
+        
+        <!-- SOL ÜST: SORU -->
+        <div id="left-hud">
+            <span id="q-prefix">BUL</span>
+            <span id="target-city">...</span>
+        </div>
 
-    <div id="game-panel">
-        <div class="target"><span id="question-label">Bul:</span> <span id="target-city">...</span></div>
-        <div class="info-group">
-            <div class="score">Puan: <span id="score">0</span></div>
-            <button id="hint-btn" class="game-btn" onclick="useHint()">Pas Geç</button>
-            <button id="reset-btn" class="game-btn" onclick="resetGame()">Menü</button>
+        <!-- SAĞ ÜST: KONTROLLER -->
+        <div id="right-hud">
+            <!-- İstatistikler -->
+            <div class="stats-group">
+                <div class="stat-item" id="timer-box" style="display:none;">
+                    <span class="stat-val val-timer" id="timer">60</span>
+                    <span class="stat-lbl">sn</span>
+                </div>
+                <div class="stat-item">
+                    <span class="stat-val val-score" id="correct-count">0</span>
+                    <span class="stat-lbl">DOĞRU</span>
+                </div>
+                <div class="stat-item">
+                    <span class="stat-val val-wrong" id="wrong-count">0</span>
+                    <span class="stat-lbl">YANLIŞ</span>
+                </div>
+            </div>
+
+            <!-- Butonlar -->
+            <div class="btn-group">
+                <button class="action-btn btn-hint" onclick="useHint()" title="Pas Geç / Göster">💡</button>
+                <button class="action-btn btn-menu" onclick="resetGame()" title="Menü">🏠</button>
+            </div>
+        </div>
+
+    </div>
+
+    <!-- GERİ BİLDİRİM -->
+    <div id="feedback-overlay"></div>
+
+    <!-- OYUN SONU RAPORU -->
+    <div id="game-over-modal">
+        <div class="report-card">
+            <h3 class="report-title">Oyun Bitti!</h3>
+            
+            <div class="stat-row">
+                <span>Doğru Sayısı:</span> 
+                <span id="final-correct" style="color:#27ae60; font-weight:bold;">0</span>
+            </div>
+            <div class="stat-row">
+                <span>Yanlış Sayısı:</span> 
+                <span id="final-wrong" style="color:#e74c3c; font-weight:bold;">0</span>
+            </div>
+            <div class="stat-row" id="final-time-row" style="display:none;">
+                <span>Kalan Süre:</span> 
+                <span id="final-time" style="color:#2c3e50; font-weight:bold;">0</span>
+            </div>
+
+            <!-- PERFORMANS NOTU -->
+            <div class="grade-label">PERFORMANS NOTU</div>
+            <div class="grade-circle" id="final-grade">A</div>
+            <div id="grade-text" style="color:#34495e; font-weight:bold; margin-bottom:15px;">Mükemmel!</div>
+
+            <button class="mode-btn" style="width:100%; margin-top:10px;" onclick="resetGame()">Ana Menü</button>
         </div>
     </div>
 
-    <div id="message"></div>
-
+    <!-- HARİTA -->
     <div id="map-container">
         <!-- SVG KODUNU AŞAĞIYA YAPIŞTIR -->
         <svg baseprofile="tiny" fill="#6f9c76" height="422" stroke="#ffffff" stroke-linecap="round" stroke-linejoin="round" stroke-width=".5" version="1.2" viewbox="0 0 1000 422" width="1000" xmlns="http://www.w3.org/2000/svg">
+            
+            <!-- Yazılar en üstte kalsın diye script ile sona ekliyoruz -->
             <g id="features">
-                <?xml version="1.0"?>
+                <!-- BURAYA ELİNDEKİ SVG KODUNUN TAMAMINI YAPIŞTIR -->
+               <?xml version="1.0"?>
     
 <!--********* Copyright (c) 2024 Pareto Softare, LLC DBA Simplemaps.com ***************************************
 ************* Free for Commercial Use, full terms at  https://simplemaps.com/resources/svg-license ************
@@ -295,7 +366,7 @@
   </path>
   <path d="M384.3 34.5l0.5 3.8 1.3 2.8 1.7 4.7-3 2.2 0.4 4.5-4.5 4.3-2.7 0.8-2.1 4.6-5.7 4.8-5 1.3-5.2-0.2 1-5.4-1.8-4.4-0.9-3.3-2.9-1.3-2.7-2.7 1.4-0.8 0.7-1.6 3.1-3.5 0.3-0.3 0.7-1.4 1.6-0.5 2.6-0.1 0.1-0.4 0.4-0.2 0.5-0.3 0-0.4 0.2-0.3 0.2-0.1 0.3 0.1 0.4 0.6 0.2 0.1 0.8-0.4 1-1.2 0.7-0.6 3.3-1.7 0.6-0.4 0.6-0.3 0.7-0.1 0.7 0.3 0.6-0.9 1.1-0.8 1.2-0.3 1.2 0.5 0.7 0 2.9-1.1 0.7-0.4 0.7 0.1 1.4-0.1z" id="TR74" name="Bartın">
   </path>
-  <path d="M352.7 51l2.7 2.7 2.9 1.3 0.9 3.3 1.8 4.4-1 5.4-2.5 3.5-1.7 2.1-0.8 3.3-1.5 5.1 0 5.6-10.2-0.3-3-0.8-3.5-0.3-11.5-1.1-8.2-4-1.8-1.8 1.6-1.5 0.6-0.9 0.4-0.8 0.2-1 0.1-1.4 0.1-0.5 0.4-1.3 0.1-0.8-0.2-0.3-0.9-0.6-0.2-0.5 0.5-0.8 1.1-0.4 2.2-0.2 0.2-0.2 0.8-1.2 0.2-0.3 0.5-0.1 7.2-2.8 10.1-6.8 5.8-2.8 1.7-1.4 0.4-0.3 4.5-1.5z" id="TR67" name="Zinguldak">
+  <path d="M352.7 51l2.7 2.7 2.9 1.3 0.9 3.3 1.8 4.4-1 5.4-2.5 3.5-1.7 2.1-0.8 3.3-1.5 5.1 0 5.6-10.2-0.3-3-0.8-3.5-0.3-11.5-1.1-8.2-4-1.8-1.8 1.6-1.5 0.6-0.9 0.4-0.8 0.2-1 0.1-1.4 0.1-0.5 0.4-1.3 0.1-0.8-0.2-0.3-0.9-0.6-0.2-0.5 0.5-0.8 1.1-0.4 2.2-0.2 0.2-0.2 0.8-1.2 0.2-0.3 0.5-0.1 7.2-2.8 10.1-6.8 5.8-2.8 1.7-1.4 0.4-0.3 4.5-1.5z" id="TR67" name="Zonguldak">
   </path>
   <path d="M315.3 79.4l1.8 1.8 8.2 4 11.5 1.1-0.8 5.5-2.3 2.7-4.4 1.1-6.1 1-2.3 1.8-0.2 3.3-1.8 4.5-3.6 2.8-4.6 0.5-5.4-2.3-7.7 0.3-3.9-1.4 1-2-0.9-1.4-0.5-1.7 0.7-1.7-0.2-1.9-0.8-1.7-0.3-1.9 1.6-3.7 2.8-2.6-0.1-1.3-0.3-1.9 0.1-0.6 6.4-0.1 1.2-0.7 0.4-0.2 0.6 0.1 1 0.3 0.5 0 2-0.4 0.3 0.1 0.4 0.3 0.3 0 0.3-0.1 0.1-0.2 0.1-0.3 0.3-0.2 2-0.8 1.5-1 1.1-1.1z" id="TR81" name="Düzce">
   </path>
@@ -375,8 +446,8 @@
   </path>
   <path d="M272.4 200.3l1.7 0.4 1.3 1.3 0.7 1.9 1.1 1.4 0.8 0.5 0.8 0.6 2.1 1.2 2.2-0.4 1.7-0.8 3.2-2.1 3-3 1.6-1.3 2.4 1.1 2.1 2.4 3.4-1.5 3.5-2.7 1.8-0.5 1.7-1.1 1.7-1.5 1.9-0.5 3.4 3.5 2.3 5.4 3.6 2.7 6.1-0.6 3.7 0.1 1.8 0.5-0.6 4-0.3 0.8-0.2 0.8 1.5 1.5 0.8 0.5-0.4 2.4-3.6 6-1.4 2.9-0.8 3.3 0.1 1.2 0.2 1.2-0.2 1.4-4.1 5.4-3.7 3.8-8.3 5.5-1.2-0.3-1.1-0.7-2.1-3.1-0.9-0.7-0.9-0.6-1.2-0.2-0.9 0.8-2.4 2.6-5.9 4.8-2.9 3.4-3 2.8-3.6 1.4-1.1 0.1-1 0.2-2.6 2.2-1.9 0.5-1.7 0.7-2.4 2.7-2.4 2.2-1.9 1.1-4.3 4.2-3.2 1.9-1 1.9-0.6 6.2-1.6 2.9-3.4 1.9-3.7 0.1-4.2-0.3-3.8 1.4-2.2-3.7-0.5-0.4-0.7-0.2-1.3-0.7-0.6-0.3-2.2 0.1-1.2-0.5 0.1-6.1 0.7-1.8 1.5-0.6 1.5-0.8 12.8-9.6 1.3-1.5-0.7-4-1.3-1.5-5.1-8.6-6.5-1.5-0.1-1.7 1.1-1.4 0.9-2.5 0.6-2.4 2.9-2.8 0.7-2.3 0.3-2.5 9.8-5.9 1.4-1.8 1.9-3.2 1.3-4.1 1.3-2.6 0.7-2.7 0.9-2.5 5.7-2.6 3.3-5.1z" id="TR03" name="Afyonkarahisar">
   </path>
-  <path d="M418.8 196.6l-3.8-7.4-1.9-8.8-1.3-2.3-3.8-4.6-1.2-5.3 1.4-5.2 1.2-5.2 2.2-5.3 3.5-1.5 5.5-0.6 0.6-3.6-0.3-3.7 0-4.2 0.6-3.5 0.6-5.1 13.1 4.2 4.4 0.4 0.6 2.9 1.9 4.5 1.2 1.2 1.2 0.1 0.9 1 0.1 0.7 0 0.7 0.7 1.8-0.2 2.1-1 1.5-1.2 2.5 0 3.2 0.5 1.2 0.2 1.3-0.2 1.3 0.5 1.3-7.6 7.3-2.1 6.3-3.3 5.2-7.7 6.3-5.3 9.3z" id="TR71" name="Kinkkale">
-  </path>
+  <path d="M418.8 196.6l-3.8-7.4-1.9-8.8-1.3-2.3-3.8-4.6-1.2-5.3 1.4-5.2 1.2-5.2 2.2-5.3 3.5-1.5 5.5-0.6 0.6-3.6-0.3-3.7 0-4.2 0.6-3.5 0.6-5.1 13.1 4.2 4.4 0.4 0.6 2.9 1.9 4.5 1.2 1.2 1.2 0.1 0.9 1 0.1 0.7 0 0.7 0.7 1.8-0.2 2.1-1 1.5-1.2 2.5 0 3.2 0.5 1.2 0.2 1.3-0.2 1.3 0.5 1.3-7.6 7.3-2.1 6.3-3.3 5.2-7.7 6.3-5.3 9.3z" id="TR71" name="Kırıkkale">
+</path>
   <path d="M613.5 302.5l-0.1 1.8 0.3 1.7-0.6 2.7-2 1.4-3-0.1-3 0.4-6.3 2.2-6 1.1-2.6 1.3-4.3 4.6-3.7-1.2-1.3-5.3-2.3-1.5-2.3 3.1-5.7 2.6-2.1-3.1-2.6-2.4-1.6-1.1-1.8-0.5-3.9 0.8-1.3 0.3-1.8 0.6-1.6 0.3-0.8-0.9-0.6 0.3-0.5 0.2-0.5 0.2-0.3 0.6-0.5 0.1-1.9-2.4-0.3-4-0.5-0.7-0.6-0.7-0.6-1.7 0.4-1.8 1.3-1.4 1.1-1.8 0-4.7 1.3-1.7 0.9-0.5 1.6-1.6 0.1-2.4-1.5-3.7-0.3-2.9 0.1-1.8 0.6-4 1.4-3.8 2.4-10.7 1.5-3.8 2.6-2.5 1.7-1.8 1.5-2.2 3.7-4.3 1.5-2.4 0.6-3.2 0.9-1.9 1.6-1 6.3-1.5 6.1 0.9 1.2 0.7 1.2 0.6 10.7-0.9-2.8 4.7 0.6 3.6 0.8 0 1.8-0.4 0.9-0.1 7 1.5 6.1 3.6 3.2 1 3.7 1.7 2.4 4.1-0.3 2.5-2.6 6.9-0.3 1.8-0.9 1.4-0.7 0.8-1.1 1.8-2.5 8.8-1.9 3.6-2.3 2.9-2.7 2.3-1.8 2.4-0.1 3.5 1.7 2.8 2.8 1 5.2 3.2z" id="TR46" name="K. Maras">
   </path>
   <path d="M841.7 182.8l1.4 3.8 1.9 3.4 1.5 1.4 1.5 1.7 0.8 1.7 1.2 1.2 1.7 2.5-0.2 4 0.2 0.8 0.1 0.9-0.5 2.4-0.4 3 0.2 3.2-3.5 2.8-3.9 1.5-7.7-0.9-1.7 0.6-1.5 1.1-1.9 0.8-2.1 0.2-0.9 0.7-0.6 2.8-1 0.9-4.2-0.1-0.9 2.2 1.5 2.4 0.3 2.6-2 1.7-2.8 3.1-3.3 1.9-8.1-0.6-7.3 2.8-0.5 0.8-2.7 0.3-2.6 0.9-1.4-0.5-0.6-1.6 0.6-2.5-0.6-2.4-3.2-2.3-2.4-3.2-0.3-1.6-0.6-1.4-1-0.9-0.6-0.2-1-1.4-1-3.5 1.4-4.8 3.3-4.1 0.6-2.4-0.3-2.7-1.3-2.4-0.9-0.9-1.1-1.9 0.1-1.9 0-1-0.4-1.1-0.3-0.5-0.8-1.8 0.3-1.4 1.3-2.4 7.6-1.3 3.8 0.9 1.8 1.2 4.6 4.6 2.8 3.9 1.1 1 4.1 1.6 4.1 0.2 1.8-1.4 2-1.2 5.8-1 1.5-1.3 0.9-1.1 3.2-2 1.4-2.3-0.3-2.8 1-2.7 6.5-3.3 1.8-0.1 1.8-0.3 0.9-0.3z" id="TR49" name="Mus">
@@ -547,7 +618,7 @@
   </circle>
   <circle class="Afyonkarahisar" cx="277.4" cy="233.6" id="TR03">
   </circle>
-  <circle class="Kinkkale" cx="424.4" cy="166.1" id="TR71">
+  <circle class="Kirikkale" cx="424.4" cy="166.1" id="TR71">
   </circle>
   <circle class="K. Maras" cx="580.1" cy="277.2" id="TR46">
   </circle>
@@ -578,107 +649,113 @@
   <circle class="Gümüshane" cx="698.7" cy="135" id="TR29">
   </circle>
  </g>
-</svg><!-- BURAYA SVG İÇİNDEKİ PATH KODLARINI YAPIŞTIR -->
-                <text x="50" y="50" font-size="20">Lütfen SVG Kodunu Buraya Yapıştırın</text>
+</svg>
             </g>
             <g id="points"></g>
             <g id="label_points"></g>
+            
+            <!-- HARİTA ÜZERİNDEKİ CEVAP YAZILARI (En Üstte) -->
+            <g id="map-labels" style="pointer-events: none;"></g>
         </svg>
         <!-- SVG BİTİŞİ -->
     </div>
 
     <script>
-        // İLLERİN MEŞHUR ÖZELLİKLERİ
+        // --- VERİ TABANI ---
         const cityFacts = {
-            "TR01": ["Kebap", "Şalgam Suyu", "Pamuk", "Sıcak Hava", "Taş Köprü", "01", "Bici Bici", "Portakal Çiçeği Karnavalı", "Altın Koza"],
-            "TR02": ["Nemrut Dağı", "Çiğ Köfte", "Güneşin Doğuşu", "Besni Üzümü", "Cendere Köprüsü", "Tütün", "Menzil", "Karakuş Tümülüsü"],
-            "TR03": ["Kaymak", "Sucuk", "Haşhaş", "Lokum", "Mermer", "Termal Kaplıcalar", "Karahisar Kalesi", "Zafer Müzesi"],
-            "TR04": ["Ağrı Dağı", "İshak Paşa Sarayı", "Nuh'un Gemisi", "Doğubayazıt", "Meteor Çukuru", "Abdigör Köftesi", "Balık Gölü"],
-            "TR05": ["Elma", "Kral Kaya Mezarları", "Şehzadeler Şehri", "Misket Elması", "Yeşilırmak", "Yalıboyu Evleri", "Ferhat ile Şirin"],
-            "TR06": ["Anıtkabir", "Simit", "Tiftik Keçisi", "Başkent", "Atakule", "Kızılay Meydanı", "Kuğulu Park", "Beypazarı Kurusu"],
-            "TR07": ["Turizm", "Düden Şelalesi", "Portakal", "Aspendos", "Kaleiçi", "Olympos", "Piyaz", "Konyaaltı Plajı", "Manavgat"],
-            "TR08": ["Boğa Güreşleri", "Çoruh Nehri", "Kafkasör Yaylası", "Barajlar", "Atatepe", "Mençuna Şelalesi", "Karagöl"],
-            "TR09": ["İncir", "Efes Antik Kenti", "Meryem Ana", "Kuşadası", "Didim", "Zeybek", "Çöp Şiş", "Şirince"],
-            "TR10": ["Höşmerim", "Ayvalık Tostu", "Zeytin", "Susurluk Ayranı", "Kaz Dağları", "Manyas Kuş Gölü", "Şeytan Sofrası"],
-            "TR11": ["Şeyh Edebali Türbesi", "Bozüyük Seramiği", "Osmanlı'nın Kuruluşu", "Bozası", "Pazaryeri Helvası", "Ertuğrul Gazi", "Söğüt"],
-            "TR12": ["Yüzen Ada", "Soğuk Çeşme Kavurması", "Bingöl Balı", "Kartal Kayak Merkezi", "Kral Kızı Kalesi", "Hesarek"],
-            "TR13": ["Büryan Kebabı", "Beş Minare", "Nemrut Krater Gölü", "Ahlat Selçuklu Mezarlığı", "Bitlis Kalesi", "Ceviz", "Bitlis Tütünü"],
-            "TR14": ["Yedigöller", "Abant Gölü", "Aşçılar Diyarı", "Gölcük", "Kartalkaya", "Köroğlu", "Mengen", "Çam Balı"],
-            "TR15": ["Sagalassos", "Salda Gölü", "Ceviz Ezmesi", "Burdur Şiş", "İnsuyu Mağarası", "Türkiye'nin Maldivleri", "Hacılar Höyüğü"],
-            "TR16": ["İskender Kebap", "Kestane Şekeri", "Uludağ", "Yeşil Türbe", "Ulu Camii", "İpek", "Cumalıkızık", "Gemlik Zeytini"],
-            "TR17": ["Truva Atı", "Şehitler Abidesi", "Peynir Helvası", "Gelibolu", "Aynalı Çarşı", "Assos", "Kaz Dağları", "Bozcaada"],
-            "TR18": ["Kaya Tuzu", "Yaran Meclisleri", "Ilgaz Dağı", "Taş Mescit", "Çankırı Kalesi", "Tuz Mağarası"],
-            "TR19": ["Leblebi", "Hattuşaş", "Hititler", "Saat Kulesi", "İskilip Dolması", "Alacahöyük", "Kargı Tulumu"],
-            "TR20": ["Pamukkale", "Travertenler", "Horoz", "Hierapolis", "Tekstil", "Buldan Bezi", "Karahayıt", "Tandır Kebabı"],
-            "TR21": ["Karpuz", "Surlar", "Ciğer Kebabı", "On Gözlü Köprü", "Hevsel Bahçeleri", "Ulu Camii", "Hasanpaşa Hanı"],
-            "TR22": ["Selimiye Camii", "Tava Ciğer", "Kırkpınar Yağlı Güreşleri", "Mimar Sinan", "Meriç Nehri", "Badem Ezmesi", "Karaağaç"],
-            "TR23": ["Çayda Çıra", "Harput Kalesi", "Orcik (Cevizli Sucuk)", "Gakgoş", "Keban Barajı", "Hazar Gölü", "Vişne Mermeri"],
-            "TR24": ["Tulum Peyniri", "Bakır İşçiliği", "Girlevik Şelalesi", "Kemaliye (Eğin)", "Karanlık Kanyon", "Mama Hatun Türbesi"],
-            "TR25": ["Cağ Kebabı", "Palandöken", "Oltu Taşı", "Çifte Minareli Medrese", "Nene Hatun", "Tortum Şelalesi", "Kadayıf Dolması"],
-            "TR26": ["Lületaşı", "Çibörek", "Porsuk Çayı", "Odunpazarı Evleri", "Sazova Parkı", "Met Helvası", "Öğrenci Şehri"],
-            "TR27": ["Baklava", "Zeugma Mozaikleri", "Antep Fıstığı", "Beyran Çorbası", "Çingene Kızı", "Bakırcılar Çarşısı", "Lahmacun"],
-            "TR28": ["Fındık", "Giresun Adası", "Kümbet Yaylası", "Mavi Göl", "Fındık Ezmesi", "Tirebolu Çayı", "Topal Osman"],
-            "TR29": ["Pestil", "Köme", "Karaca Mağarası", "Tomara Şelalesi", "Kuşburnu", "Santa Harabeleri", "Satala Antik Kenti"],
-            "TR30": ["Ters Lale", "Cilo Dağları", "Zap Suyu", "Berçelan Yaylası", "Kilim", "Hakkari Balı", "Sümbül Dağı"],
-            "TR31": ["Künefe", "Medeniyetler Sofrası", "St. Pierre Kilisesi", "Habib-i Neccar", "Titus Tüneli", "Asi Nehri", "Harbiye Şelaleleri"],
-            "TR32": ["Gül", "Halı", "Lavanta Bahçeleri", "Eğirdir Gölü", "Davraz Kayak Merkezi", "Elma", "Yedi Renkli Göl"],
-            "TR33": ["Tantuni", "Kızkalesi", "Cezerye", "Yerköprü Şelalesi", "Cennet Cehennem", "Limon", "Tarsus Şelalesi"],
-            "TR34": ["Boğaz Köprüsü", "Kız Kulesi", "Ayasofya", "Topkapı Sarayı", "Galata Kulesi", "Simit", "Martı", "Taksim", "Adalar"],
-            "TR35": ["Saat Kulesi", "Boyoz", "Kumru", "Efes", "Kordon", "Çeşme", "Alaçatı", "İnciraltı", "Zeybek"],
-            "TR36": ["Kaşar Peyniri", "Ani Harabeleri", "Kaz Eti", "Sarıkamış", "Çıldır Gölü", "Baltık Mimarisi", "Doğu Ekspresi"],
-            "TR37": ["Sarımsak", "Etli Ekmek", "Ilgaz Dağı", "Valla Kanyonu", "Nasrullah Meydanı", "Çekme Helva", "Küre Dağları"],
-            "TR38": ["Mantı", "Pastırma", "Erciyes Dağı", "Sucuk", "Kapuzbaşı Şelalesi", "Gevher Nesibe", "Yamula Barajı"],
-            "TR39": ["Hardaliye", "Longoz Ormanları", "Dupnisa Mağarası", "İğneada", "Peynir", "Köfte", "Ayçiçeği"],
-            "TR40": ["Ahi Evran", "Cacabey Medresesi", "Mucur", "Kaman Cevizi", "Termal", "Bozkırın Tezenesi (Neşet Ertaş)", "Hirfanlı Barajı"],
-            "TR41": ["Pişmaniye", "Sanayi", "Kartepe", "Maşukiye", "Körfez", "Seka Park", "Kandıra Yoğurdu"],
-            "TR42": ["Mevlana", "Etli Ekmek", "Konya Ovası", "Çatalhöyük", "Şeb-i Arus", "Alaaddin Tepesi", "Tandır", "Bıçak Arası"],
-            "TR43": ["Çini", "Porselen", "Aizanoi Antik Kenti", "Termal", "Dumlupınar", "Hisar Kalesi", "Gözleme"],
-            "TR44": ["Kayısı", "Darende Somuncu Baba", "Levent Vadisi", "Arslantepe Höyüğü", "Gün Kurusu", "Kanalboyu", "Battalgazi"],
-            "TR45": ["Mesir Macunu", "Spil Dağı", "Sardes Antik Kenti", "Manisa Tarzanı", "Kula Peri Bacaları", "Sultaniye Üzümü"],
-            "TR46": ["Dondurma", "Tarhana", "Yedi Güzel Adam", "Taş Köprü", "Eshab-ı Kehf", "Başkonuş Yaylası", "Kırmızı Biber"],
-            "TR47": ["Taş Evler", "Telkari (Gümüş)", "Kaburga Dolması", "Deyrulzafaran Manastırı", "Kasımiye Medresesi", "Badem Şekeri"],
-            "TR48": ["Bodrum", "Marmaris", "Fethiye", "Ölüdeniz", "Kelebekler Vadisi", "Turizm", "Datça", "Dalyan"],
-            "TR49": ["Malazgirt Ovası", "Lale", "Murat Köprüsü", "Varto", "Muş Köftesi", "Üzüm"],
-            "TR50": ["Peri Bacaları", "Balonlar", "Testi Kebabı", "Ürgüp", "Göreme", "Ihlara", "Avanos Çömlekleri", "Yeraltı Şehirleri"],
-            "TR51": ["Gazoz", "Patates", "Aladağlar", "Saat Kulesi", "Gümüşler Manastırı", "Elma", "Çiftehan Kaplıcaları"],
-            "TR52": ["Fındık", "Boztepe", "Teleferik", "Yason Burnu", "Çambaşı Yaylası", "Perşembe Yaylası", "Tost"],
-            "TR53": ["Çay", "Anzer Balı", "Ayder Yaylası", "Fırtına Deresi", "Zilkale", "Hamsi", "Laz Böreği", "Kaçkar Dağları"],
-            "TR54": ["Islama Köfte", "Sapanca Gölü", "Kabak Tatlısı", "Acarlar Longozu", "Taraklı Evleri", "Çark Caddesi"],
-            "TR55": ["Pide", "Atatürk Anıtı", "Bandırma Vapuru", "Kızılırmak Deltası", "Amazon Köyü", "Amisos Tepesi", "Çakallı Menemeni"],
-            "TR56": ["Büryan", "Fıstık", "Battaniye", "Veysel Karani", "Tillo", "Botan Çayı", "Deliklitaş"],
-            "TR57": ["Hamsilos Koyu", "Mantı", "Tarihi Cezaevi", "İnceburun (En Kuzey)", "Erfelek Şelaleleri", "Nokul", "Boyabat Kalesi"],
-            "TR58": ["Kangal Köpeği", "Sivas Köftesi", "Gök Medrese", "Divriği Ulu Camii", "Madımak", "Aşık Veysel", "Çermik"],
-            "TR59": ["Tekirdağ Köftesi", "Rakı", "Ayçiçeği", "Kiraz Festivali", "Uçmakdere", "Namık Kemal", "Kumbağ"],
-            "TR60": ["Tokat Kebabı", "Yaprak Sarması", "Ballıca Mağarası", "Yazma (Kumaş)", "Niksar Cevizi", "Almus Barajı"],
-            "TR61": ["Sümela Manastırı", "Hamsi", "Kuymak", "Uzungöl", "Akçaabat Köftesi", "Horon", "Vakfıkebir Ekmeği"],
-            "TR62": ["Munzur Gözeleri", "Tunceli Balı", "Pertek Kalesi", "Düzgün Baba", "Pülümür Vadisi", "Ovacık", "Sarımsak"],
-            "TR63": ["Balıklıgöl", "Göbeklitepe", "Çiğ Köfte", "Sıra Gecesi", "Harran Evleri", "Halfeti", "Lahmacun", "İsot"],
-            "TR64": ["Tarhana", "Kilim", "Ulubey Kanyonu", "Karun Hazineleri", "Clandras Köprüsü", "Şeker Fabrikası"],
-            "TR65": ["Van Kedisi", "Van Gölü Canavarı", "Van Kahvaltısı", "Akdamar Adası", "Otlu Peynir", "Muradiye Şelalesi", "Van Kalesi"],
-            "TR66": ["Testi Kebabı", "Saat Kulesi", "Çamlık Milli Parkı", "Arabaşı", "Sorgun", "Roma Hamamı"],
-            "TR67": ["Taş Kömürü", "Madenci", "Karaelmas", "Gökgöl Mağarası", "Filyos", "Çaycuma Yoğurdu"],
-            "TR68": ["Ihlara Vadisi", "Malaklı Köpeği", "Hasan Dağı", "Eğri Minare", "Somuncu Baba", "Tuz Gölü", "Güzelyurt"],
-            "TR69": ["Bayburt Kalesi", "Çoruh Nehri", "Baksı Müzesi", "Aydıntepe Yeraltı Şehri", "Dede Korkut", "Tel Helva"],
-            "TR70": ["Koyun", "Türk Dili Başkenti", "Karamanoğlu Mehmet Bey", "Manazan Mağaraları", "Ermenek", "Bisküvi"],
-            "TR71": ["Silah Fabrikası", "Kızılırmak", "Celal Bayar Parkı", "Hasandede", "MKE", "Keskin Tava"],
-            "TR72": ["Petrol", "Hasankeyf", "Malabadi Köprüsü", "Sason Çileği", "Raman Dağı", "Yarasalar"],
-            "TR73": ["Cudi Dağı", "Mem-u Zin", "Nuh'un Gemisi (Cudi)", "Kasrik Boğazı", "Ters Lale", "Habur Sınır Kapısı"],
-            "TR74": ["Çilek", "Amasra", "Güzelcehisar", "Küre Dağları", "Bartın Çayı", "Galla Pazarı"],
-            "TR75": ["Damal Bebeği", "Kaşar Peyniri", "Atatürk Silüeti", "Çıldır Gölü", "Posof", "Kaz Eti"],
-            "TR76": ["Kayısı", "Ağrı Dağı Manzarası", "Tuzluca Tuz Mağaraları", "Leylekler", "Pamuk", "Meteor Çukuru"],
-            "TR77": ["Termal Kaplıcalar", "Yürüyen Köşk", "Çınarcık", "Armutlu", "Kivi", "Süs Bitkileri"],
-            "TR78": ["Safranbolu Evleri", "Çelik", "Lokum", "Kristal Teras", "Bulak Mencilis Mağarası", "Hadrianapolis"],
-            "TR79": ["Yorgan", "Kilis Tavası", "Zeytinyağı", "Cennet Çamuru", "Ravanda Kalesi", "Katmer"],
-            "TR80": ["Yer Fıstığı", "Karatepe Aslantaş", "Kadirli Turpu", "Yaylalar", "Zorkun", "Kastabala"],
-            "TR81": ["Şelaleler (Güzeldere)", "Tütün Kolonyası", "Akçakoca", "Rafting (Melen)", "Samandere", "Fındık"]
+            "TR01": ["Kebap", "Şalgam Suyu", "Taş Köprü", "01", "Bici Bici", "Pamuk"],
+            "TR02": ["Nemrut Dağı", "Cendere Köprüsü", "Besni Üzümü", "Menzil", "Karakuş Tümülüsü"],
+            "TR03": ["Kaymak", "Afyon Sucuğu", "Haşhaş", "Karahisar Kalesi", "Zafer Müzesi"],
+            "TR04": ["Ağrı Dağı", "İshak Paşa Sarayı", "Nuh'un Gemisi İzleri", "Meteor Çukuru"],
+            "TR05": ["Amasya Elması", "Kral Kaya Mezarları", "Şehzadeler Şehri", "Ferhat ile Şirin"],
+            "TR06": ["Anıtkabir", "Ankara Simidi", "Tiftik Keçisi", "Başkent", "Atakule", "Beypazarı Kurusu"],
+            "TR07": ["Düden Şelalesi", "Aspendos", "Kaleiçi", "Olympos", "Antalya Piyazı", "Konyaaltı"],
+            "TR08": ["Kafkasör Boğa Güreşleri", "Çoruh Nehri", "Mençuna Şelalesi", "Karagöl", "Atatepe"],
+            "TR09": ["Aydın İnciri", "Efes Antik Kenti", "Kuşadası", "Didim", "Çöp Şiş"],
+            "TR10": ["Höşmerim Tatlısı", "Ayvalık Tostu", "Susurluk Ayranı", "Kaz Dağları", "Manyas Gölü"],
+            "TR11": ["Şeyh Edebali Türbesi", "Bozüyük Seramiği", "Osmanlı'nın Kuruluş Yeri", "Pazaryeri Helvası"],
+            "TR12": ["Yüzen Adalar", "Bingöl Balı", "Soğuk Çeşme Kavurması", "Kartal Kayak Merkezi"],
+            "TR13": ["Büryan Kebabı", "Bitlis Beş Minare", "Ahlat Selçuklu Mezarlığı", "Nemrut Krater Gölü"],
+            "TR14": ["Yedigöller", "Abant Gölü", "Bolu Aşçıları", "Kartalkaya", "Gölcük"],
+            "TR15": ["Sagalassos Antik Kenti", "Salda Gölü (Maldivler)", "Burdur Şiş", "İnsuyu Mağarası"],
+            "TR16": ["İskender Kebap", "Kestane Şekeri", "Uludağ", "Cumalıkızık", "Yeşil Türbe"],
+            "TR17": ["Truva Atı", "Gelibolu Şehitliği", "Aynalı Çarşı", "Çanakkale Boğazı", "Peynir Helvası"],
+            "TR18": ["Çankırı Kaya Tuzu", "Taş Mescit", "Yaran Meclisleri", "Tuz Mağarası"],
+            "TR19": ["Çorum Leblebisi", "Hattuşaş", "Hitit Güneşi", "İskilip Dolması"],
+            "TR20": ["Pamukkale Travertenleri", "Denizli Horozu", "Hierapolis", "Buldan Bezi"],
+            "TR21": ["Diyarbakır Karpuzu", "Diyarbakır Surları", "On Gözlü Köprü", "Hevsel Bahçeleri"],
+            "TR22": ["Selimiye Camii", "Edirne Tava Ciğeri", "Kırkpınar Yağlı Güreşleri", "Meriç Köprüsü"],
+            "TR23": ["Çayda Çıra Oyunu", "Harput Kalesi", "Orcik", "Gakgoş", "Keban Barajı"],
+            "TR24": ["Erzincan Tulum Peyniri", "Girlevik Şelalesi", "Bakır İşçiliği", "Mama Hatun"],
+            "TR25": ["Cağ Kebabı", "Palandöken", "Oltu Taşı", "Çifte Minareli Medrese", "Nene Hatun"],
+            "TR26": ["Lületaşı", "Çibörek", "Porsuk Çayı", "Odunpazarı Evleri", "Met Helvası"],
+            "TR27": ["Antep Baklavası", "Zeugma Mozaikleri", "Antep Fıstığı", "Çingene Kızı", "Beyran"],
+            "TR28": ["Giresun Fındığı", "Giresun Adası", "Kümbet Yaylası", "Mavi Göl"],
+            "TR29": ["Gümüşhane Pestili", "Köme", "Karaca Mağarası", "Tomara Şelalesi"],
+            "TR30": ["Ters Lale", "Cilo Dağları", "Zap Suyu", "Hakkari Kilimi"],
+            "TR31": ["Antakya Künefesi", "St. Pierre Kilisesi", "Asi Nehri", "Titus Tüneli", "Medeniyetler Korosu"],
+            "TR32": ["Isparta Gülü", "Lavanta Bahçeleri", "Eğirdir Gölü", "Isparta Halısı"],
+            "TR33": ["Mersin Tantuni", "Kızkalesi", "Cezerye", "Yerköprü Şelalesi", "Tarsus Şelalesi"],
+            "TR34": ["Boğaz Köprüsü", "Kız Kulesi", "Topkapı Sarayı", "Galata Kulesi", "Sultanahmet"],
+            "TR35": ["İzmir Saat Kulesi", "Boyoz", "Kumru", "Kordon", "Alaçatı"],
+            "TR36": ["Kars Kaşarı", "Ani Harabeleri", "Kars Kazı", "Sarıkamış", "Çıldır Gölü"],
+            "TR37": ["Taşköprü Sarımsağı", "Ilgaz Dağı", "Kastamonu Etli Ekmeği", "Valla Kanyonu"],
+            "TR38": ["Kayseri Mantısı", "Pastırma", "Erciyes Dağı", "Sucuk", "Kapuzbaşı"],
+            "TR39": ["İğneada Longoz Ormanları", "Hardaliye", "Dupnisa Mağarası", "Kırklareli Köftesi"],
+            "TR40": ["Ahi Evran", "Cacabey Medresesi", "Kaman Cevizi", "Neşet Ertaş"],
+            "TR41": ["İzmit Pişmaniyesi", "Kartepe", "Maşukiye", "Kandıra Yoğurdu"],
+            "TR42": ["Mevlana Müzesi", "Konya Etli Ekmeği", "Çatalhöyük", "Şeb-i Arus", "Bıçak Arası"],
+            "TR43": ["Kütahya Porseleni", "Çini Sanatı", "Aizanoi Antik Kenti", "Dumlupınar"],
+            "TR44": ["Malatya Kayısısı", "Darende Somuncu Baba", "Levent Vadisi", "Battalgazi"],
+            "TR45": ["Mesir Macunu", "Spil Dağı", "Manisa Tarzanı", "Sardes", "Kula Evleri"],
+            "TR46": ["Maraş Dondurması", "Maraş Tarhanası", "Yedi Güzel Adam", "Taş Köprü (Maraş)"],
+            "TR47": ["Mardin Taş Evleri", "Telkari", "Deyrulzafaran", "Kaburga Dolması"],
+            "TR48": ["Bodrum Kalesi", "Ölüdeniz", "Kelebekler Vadisi", "Marmaris", "Halikarnas"],
+            "TR49": ["Malazgirt Meydanı", "Muş Lalesi", "Murat Köprüsü", "Muş Köftesi"],
+            "TR50": ["Kapadokya Balonları", "Peri Bacaları", "Ürgüp-Göreme", "Testi Kebabı"],
+            "TR51": ["Niğde Gazozu", "Aladağlar", "Gümüşler Manastırı", "Niğde Patatesi"],
+            "TR52": ["Ordu Fındığı", "Boztepe Teleferik", "Yason Burnu", "Perşembe Yaylası"],
+            "TR53": ["Rize Çayı", "Ayder Yaylası", "Anzer Balı", "Fırtına Deresi", "Zilkale"],
+            "TR54": ["Islama Köfte", "Sapanca Gölü", "Adapazarı Kabağı", "Acarlar Longozu"],
+            "TR55": ["Bandırma Vapuru", "Samsun Pidesi", "Amazon Köyü", "Atatürk Anıtı (Heykel)"],
+            "TR56": ["Siirt Büryan Kebabı", "Siirt Fıstığı", "Veysel Karani", "Siirt Battaniyesi"],
+            "TR57": ["Sinop Cezaevi", "Sinop Mantısı", "Hamsilos Koyu", "İnceburun", "Nokul"],
+            "TR58": ["Kangal Köpeği", "Sivas Köftesi", "Divriği Ulu Camii", "Aşık Veysel", "Madımak"],
+            "TR59": ["Tekirdağ Köftesi", "Tekirdağ Rakısı", "Kiraz Festivali", "Ayçiçeği Tarlaları"],
+            "TR60": ["Tokat Kebabı", "Tokat Yaprağı", "Ballıca Mağarası", "Niksar Cevizi"],
+            "TR61": ["Sümela Manastırı", "Trabzon Ekmeği", "Uzungöl", "Akçaabat Köftesi", "Kuymak"],
+            "TR62": ["Munzur Vadisi", "Tunceli Balı", "Pertek Kalesi", "Düzgün Baba"],
+            "TR63": ["Balıklıgöl", "Göbeklitepe", "Urfa Sıra Gecesi", "Çiğ Köfte", "Harran Kümbet Evleri"],
+            "TR64": ["Uşak Tarhanası", "Ulubey Kanyonu", "Karun Hazineleri", "Uşak Kilimi"],
+            "TR65": ["Van Kedisi", "Van Gölü (Canavarı)", "Van Kahvaltısı", "Akdamar Kilisesi"],
+            "TR66": ["Yozgat Arabaşısı", "Yozgat Saat Kulesi", "Çamlık Milli Parkı", "Testi Kebabı (Yozgat)"],
+            "TR67": ["Taş Kömürü", "Madenci Anıtı", "Zonguldak Mağaraları", "Karaelmas"],
+            "TR68": ["Ihlara Vadisi", "Aksaray Malaklısı", "Hasan Dağı", "Eğri Minare"],
+            "TR69": ["Bayburt Kalesi", "Baksı Müzesi", "Aydıntepe Yeraltı Şehri", "Dede Korkut"],
+            "TR70": ["Karaman Koyunu", "Türk Dil Bayramı", "Karamanoğlu Mehmet Bey", "Manazan"],
+            "TR71": ["Silah Fabrikası (MKE)", "Kırıkkale", "Celal Bayar Parkı", "Keskin Tava"],
+            "TR72": ["Batman Petrolü", "Hasankeyf", "Malabadi Köprüsü", "Raman Dağı"],
+            "TR73": ["Cudi Dağı", "Şırnak", "Mem-u Zin", "Ters Lale (Şırnak)", "Habur"],
+            "TR74": ["Amasra Kalesi", "Bartın Çileği", "Güzelcehisar Lav Sütunları", "Çekiciler Çarşısı"],
+            "TR75": ["Damal Bebeği", "Ardahan Kaşarı", "Atatürk Silüeti (Damal)", "Çıldır Gölü (Ardahan)"],
+            "TR76": ["Iğdır Kayısısı", "Ağrı Dağı Manzarası", "Tuzluca Tuz Mağaraları", "Pamuk (Iğdır)"],
+            "TR77": ["Yalova Termal", "Yürüyen Köşk", "Çınarcık", "Armutlu Kaplıcaları"],
+            "TR78": ["Safranbolu Evleri", "Karabük Çeliği", "Safran Çiçeği", "Kristal Teras"],
+            "TR79": ["Kilis Tavası", "Kilis Yorganı", "Ravanda Kalesi", "Cennet Çamuru"],
+            "TR80": ["Osmaniye Yer Fıstığı", "Karatepe Aslantaş", "Zorkun Yaylası", "Kadirli Turpu"],
+            "TR81": ["Düzce Şelaleleri", "Akçakoca", "Melen Çayı (Rafting)", "Samandere Şelalesi"]
         };
 
-        // --- OYUN MOTORU ---
+        // --- DEĞİŞKENLER ---
         let cityData = [];
         let currentTarget = null;
-        let score = 0;
+        let correctCount = 0;
+        let wrongCount = 0;
         let foundCities = [];
         let gameMode = 'name';
+        let timer = 60;
+        let timerInterval = null;
+        let isGameActive = false;
 
         document.addEventListener("DOMContentLoaded", () => {
             parseMapData();
@@ -690,139 +767,265 @@
 
             cityData = []; 
             paths.forEach(path => {
-                const name = path.getAttribute('name');
+                let name = path.getAttribute('name');
                 const id = path.getAttribute('id');
                 
+                // Zonguldak Düzeltmesi
+                if (name === "Zinguldak") name = "Zonguldak";
+
                 if (name && id) {
                     const plateNumber = id.replace("TR", "");
                     const factsList = cityFacts[id] || ["Bilgi Yok"];
                     
-                    cityData.push({ 
-                        id: id, 
-                        name: name,
-                        plate: plateNumber,
-                        factsList: factsList
-                    });
-                    
+                    cityData.push({ id, name, plate: plateNumber, factsList });
                     path.addEventListener('click', handleCityClick);
                 }
             });
         }
 
-        function selectMode(mode) {
+        // OYUNU BAŞLAT
+        function startGame(mode) {
             gameMode = mode;
+            correctCount = 0;
+            wrongCount = 0;
+            foundCities = [];
+            isGameActive = true;
+
             document.getElementById('start-screen').style.display = 'none';
-            document.getElementById('game-panel').style.display = 'flex';
+            document.getElementById('ui-layer').style.display = 'block';
+            document.getElementById('game-over-modal').style.display = 'none';
+
+            document.getElementById('correct-count').textContent = '0';
+            document.getElementById('wrong-count').textContent = '0';
+            document.getElementById('map-labels').innerHTML = ''; 
             
-            const qLabel = document.getElementById('question-label');
-            if(mode === 'name') qLabel.textContent = "Şehri Bul:";
-            else if(mode === 'plate') qLabel.textContent = "Plakayı Bul:";
-            else qLabel.textContent = "Bu Neresi?";
+            document.querySelectorAll('g#features path').forEach(p => p.classList.remove('correct', 'wrong', 'revealed'));
+
+            const timerBox = document.getElementById('timer-box');
+            if (mode === 'mixed') {
+                timerBox.style.display = 'block';
+                timer = 60;
+                document.getElementById('timer').textContent = timer;
+                startTimer();
+            } else {
+                timerBox.style.display = 'none';
+                clearInterval(timerInterval);
+            }
 
             nextTurn();
         }
 
-        function resetGame() {
-            score = 0;
-            foundCities = [];
-            currentTarget = null;
-
-            document.getElementById('score').textContent = '0';
-            document.getElementById('message').textContent = '';
-            document.getElementById('target-city').textContent = '...';
-
-            const allPaths = document.querySelectorAll('path');
-            allPaths.forEach(path => {
-                path.classList.remove('correct', 'wrong', 'revealed');
-            });
-
-            document.getElementById('game-panel').style.display = 'none';
-            document.getElementById('start-screen').style.display = 'flex';
+        function startTimer() {
+            clearInterval(timerInterval);
+            timerInterval = setInterval(() => {
+                timer--;
+                document.getElementById('timer').textContent = timer;
+                if (timer <= 0) endGame();
+            }, 1000);
         }
 
+        // YENİ SORU BELİRLEME
         function nextTurn() {
+            if (!isGameActive) return;
+
             const availableCities = cityData.filter(city => !foundCities.includes(city.id));
 
             if (availableCities.length === 0) {
-                gameComplete();
+                endGame();
                 return;
             }
 
             const randomIndex = Math.floor(Math.random() * availableCities.length);
             currentTarget = availableCities[randomIndex];
+            
+            // Karma mod için
+            let currentQuestionMode = gameMode;
+            if (gameMode === 'mixed') {
+                const types = ['name', 'plate', 'famous'];
+                currentQuestionMode = types[Math.floor(Math.random() * types.length)];
+            }
+            currentTarget.questionMode = currentQuestionMode; 
 
             const targetLabel = document.getElementById('target-city');
+            const qPrefix = document.getElementById('q-prefix');
 
-            if (gameMode === 'name') {
+            if (currentQuestionMode === 'name') {
                 targetLabel.textContent = currentTarget.name;
-            } else if (gameMode === 'plate') {
+                qPrefix.textContent = "ŞEHRİ BUL";
+                currentTarget.answerText = currentTarget.name; 
+
+            } else if (currentQuestionMode === 'plate') {
                 targetLabel.textContent = currentTarget.plate;
+                qPrefix.textContent = "PLAKAYI BUL";
+                currentTarget.answerText = currentTarget.plate;
+
             } else {
-                // Rastgele bir özellik seç
                 const randomFact = currentTarget.factsList[Math.floor(Math.random() * currentTarget.factsList.length)];
                 targetLabel.textContent = randomFact;
+                qPrefix.textContent = "BU NERESİ?";
+                
+                // Cevap olarak isim yazsın ki anlaşılsın, ama özellik kısaysa özellik de yazılabilir.
+                // Karmaşıklığı önlemek için meşhur modunda haritaya her zaman şehir adı yazalım.
+                currentTarget.answerText = currentTarget.name; 
             }
-            
-            document.getElementById('message').textContent = "";
+        }
+
+        // AKILLI ETİKETLEME
+        function addLabelToMap(cityId, textContent) {
+            const path = document.getElementById(cityId);
+            if (!path) return;
+
+            const bbox = path.getBBox();
+            const centerX = bbox.x + bbox.width / 2;
+            const centerY = bbox.y + bbox.height / 2;
+
+            const text = document.createElementNS("http://www.w3.org/2000/svg", "text");
+            text.setAttribute("x", centerX);
+            text.setAttribute("y", centerY);
+            text.setAttribute("class", "map-label");
+            text.textContent = textContent;
+
+            document.getElementById('map-labels').appendChild(text);
         }
 
         function handleCityClick(e) {
-            const clickedElement = e.target;
-            const clickedId = clickedElement.getAttribute('id');
-            const clickedData = cityData.find(c => c.id === clickedId); 
+            if (!isGameActive) return;
 
-            if (document.getElementById('start-screen').style.display === 'flex') return;
+            const clickedId = e.target.getAttribute('id');
+            const clickedData = cityData.find(c => c.id === clickedId);
+
             if (!currentTarget || foundCities.includes(clickedId)) return;
 
             if (clickedId === currentTarget.id) {
-                score += 10;
-                document.getElementById('score').textContent = score;
-                document.getElementById('message').textContent = "Tebrikler! Doğru.";
-                document.getElementById('message').style.color = "#27ae60";
+                // DOĞRU
+                correctCount++;
+                document.getElementById('correct-count').textContent = correctCount;
+                showFeedback("Tebrikler! 🎉", "#2ecc71", 800);
 
-                clickedElement.classList.add('correct');
+                e.target.classList.add('correct');
                 foundCities.push(clickedId);
 
-                setTimeout(nextTurn, 500);
-            } else {
-                let wrongMsg = `Yanlış! Orası: ${clickedData.name}`;
-                if(gameMode === 'plate') {
-                    wrongMsg += ` (${clickedData.plate})`;
+                // --- AKILLI ETİKETLEME ---
+                // Soru karma ise soruya göre, değilse ismini yaz
+                let label = currentTarget.answerText;
+                if(gameMode === 'mixed' && currentTarget.questionMode === 'famous') {
+                     // Karma modda ünlü bir şey sorulduysa haritaya İSMİNİ yaz ki yerini öğrensin
+                     label = currentTarget.name;
                 }
                 
-                document.getElementById('message').textContent = wrongMsg;
-                document.getElementById('message').style.color = "#e74c3c";
+                addLabelToMap(clickedId, label);
 
-                clickedElement.classList.add('wrong');
-                setTimeout(() => {
-                    clickedElement.classList.remove('wrong');
-                }, 500);
+                setTimeout(nextTurn, 400);
+            } else {
+                // YANLIŞ
+                wrongCount++;
+                document.getElementById('wrong-count').textContent = wrongCount;
+                
+                let wrongMsg = `${clickedData.name}`;
+                if(gameMode === 'plate') wrongMsg += ` (${clickedData.plate})`;
+                
+                showFeedback(`Yanlış! Orası: ${wrongMsg}`, "#e74c3c", 1000);
+                
+                e.target.classList.add('wrong');
+                setTimeout(() => e.target.classList.remove('wrong'), 400);
             }
         }
 
         function useHint() {
-            if (!currentTarget) return;
+            if (!isGameActive || !currentTarget) return;
 
             const targetElement = document.getElementById(currentTarget.id);
-
             if (targetElement) {
                 targetElement.classList.add('revealed');
                 foundCities.push(currentTarget.id);
-
-                let answerText = currentTarget.name;
-                if(gameMode === 'plate') answerText += " (" + currentTarget.plate + ")";
                 
-                document.getElementById('message').textContent = "Cevap: " + answerText + " (Puan yok)";
-                document.getElementById('message').style.color = "#f39c12";
+                let answer = currentTarget.name;
+                if(gameMode === 'plate') answer = currentTarget.plate;
 
-                setTimeout(nextTurn, 2000);
+                addLabelToMap(currentTarget.id, answer);
+                
+                showFeedback(`Cevap: ${currentTarget.name}`, "#f39c12", 1500);
+
+                setTimeout(nextTurn, 1500);
             }
         }
 
-        function gameComplete() {
-            document.getElementById('target-city').textContent = "BİTTİ!";
-            alert(`Tebrikler! Tüm haritayı tamamladın. Toplam Puan: ${score}`);
-            resetGame();
+        // --- GELİŞMİŞ PERFORMANS ALGORİTMASI ---
+        function endGame() {
+            isGameActive = false;
+            clearInterval(timerInterval);
+
+            // Algoritma Mantığı:
+            // 1. Net Skor = Doğru - (Yanlış * 0.5) (Yanlışlar yarım doğru götürür)
+            // 2. Doğruluk Oranı = Doğru / (Doğru + Yanlış)
+            // 3. Hız Faktörü (Sadece Karma Mod): Dakikada kaç doğru?
+            
+            const totalAttempts = correctCount + wrongCount;
+            let finalGrade = "F";
+            let gradeText = "Daha çok çalışmalısın.";
+            let gradeColor = "#7f8c8d";
+
+            // Sadece KARMA (Zamanlı) mod için özel hesap
+            if (gameMode === 'mixed') {
+                // Karma modda hız ve doğruluk önemlidir.
+                // İdeal: 60 saniyede 15+ doğru ve az yanlış.
+                
+                let netScore = correctCount - (wrongCount * 0.5);
+                
+                if (netScore >= 25) { finalGrade = "S"; gradeText = "EFSANEVİ!"; gradeColor = "#f1c40f"; }
+                else if (netScore >= 20) { finalGrade = "A"; gradeText = "Mükemmel!"; gradeColor = "#2ecc71"; }
+                else if (netScore >= 15) { finalGrade = "B"; gradeText = "Çok İyi!"; gradeColor = "#3498db"; }
+                else if (netScore >= 10) { finalGrade = "C"; gradeText = "İyi!"; gradeColor = "#9b59b6"; }
+                else if (netScore >= 5) { finalGrade = "D"; gradeText = "Geliştirilmeli"; gradeColor = "#e67e22"; }
+                else { finalGrade = "F"; gradeText = "Başarısız"; gradeColor = "#e74c3c"; }
+
+            } else {
+                // Normal modlarda sadece Doğruluk Oranına bakılır
+                // Çünkü süre yok.
+                let accuracy = 0;
+                if (totalAttempts > 0) accuracy = correctCount / totalAttempts;
+
+                if (correctCount > 70 && accuracy > 0.95) { finalGrade = "S"; gradeText = "Harita Üstadı!"; gradeColor = "#f1c40f"; }
+                else if (accuracy >= 0.9) { finalGrade = "A"; gradeText = "Harika!"; gradeColor = "#2ecc71"; }
+                else if (accuracy >= 0.75) { finalGrade = "B"; gradeText = "Güzel İş!"; gradeColor = "#3498db"; }
+                else if (accuracy >= 0.6) { finalGrade = "C"; gradeText = "Fena Değil"; gradeColor = "#9b59b6"; }
+                else if (accuracy >= 0.4) { finalGrade = "D"; gradeText = "Çalışmalısın"; gradeColor = "#e67e22"; }
+                else { finalGrade = "F"; gradeText = "Tekrar Dene"; gradeColor = "#e74c3c"; }
+            }
+
+            document.getElementById('final-correct').textContent = correctCount;
+            document.getElementById('final-wrong').textContent = wrongCount;
+            
+            const gradeEl = document.getElementById('final-grade');
+            gradeEl.textContent = finalGrade;
+            gradeEl.style.color = gradeColor;
+            gradeEl.style.borderColor = gradeColor;
+            
+            const textEl = document.getElementById('grade-text');
+            textEl.textContent = gradeText;
+            textEl.style.color = gradeColor;
+
+            if(gameMode === 'mixed') {
+                document.getElementById('final-time-row').style.display = 'none'; // Süre bittiği için göstermeye gerek yok
+            }
+
+            document.getElementById('game-over-modal').style.display = 'flex';
+        }
+
+        function showFeedback(text, color, duration) {
+            const overlay = document.getElementById('feedback-overlay');
+            overlay.textContent = text;
+            overlay.style.color = color;
+            overlay.style.opacity = 1;
+            setTimeout(() => { overlay.style.opacity = 0; }, duration);
+        }
+
+        function resetGame() {
+            isGameActive = false;
+            clearInterval(timerInterval);
+            document.getElementById('ui-layer').style.display = 'none';
+            document.getElementById('game-over-modal').style.display = 'none';
+            document.getElementById('start-screen').style.display = 'flex';
         }
     </script>
 </body>
