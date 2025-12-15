@@ -2,20 +2,29 @@
 <html lang="tr">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Türkiye Harita Oyunu - Pro Zoom</title>
+    <!-- Mobil uyumluluk ve Tam Ekran ayarları -->
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="theme-color" content="#2c3e50">
+    
+    <title>Türkiye Harita Oyunu</title>
     <style>
-        * { box-sizing: border-box; }
+        * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
 
         body {
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
             margin: 0;
             padding: 0;
-            height: 100vh;
+            /* 100dvh: Mobil tarayıcı barlarını hesaba katan dinamik yükseklik */
+            height: 100vh; 
+            height: 100dvh; 
             width: 100vw;
             overflow: hidden;
             user-select: none;
             background-color: #2c3e50;
+            position: fixed; /* Sayfanın kaymasını tamamen engeller */
         }
 
         /* --- HARİTA ALANI --- */
@@ -30,7 +39,7 @@
             justify-content: center;
             z-index: 1;
             overflow: hidden;
-            cursor: grab; /* Tutma imleci */
+            cursor: grab;
         }
         
         #map-container:active { cursor: grabbing; }
@@ -38,9 +47,8 @@
         svg { 
             width: 100%; height: 100%; 
             display: block; 
-            /* SVG'nin kendi tıklama olaylarını engelleme */
             pointer-events: auto; 
-            transition: none; /* Zoom sırasında gecikme olmasın */
+            transition: none;
         }
 
         /* --- ŞEHİR STİLLERİ --- */
@@ -50,8 +58,7 @@
             stroke-width: 1px;
             stroke-linejoin: round;
             cursor: pointer;
-            /* Dokunmatik cihazlarda tıklama gecikmesini önler */
-            touch-action: none; 
+            touch-action: manipulation;
         }
 
         g#features path:hover {
@@ -61,15 +68,13 @@
             z-index: 100;
         }
 
-        /* Renkler */
         g#features path.correct { fill: #27ae60 !important; stroke: #145a32 !important; pointer-events: none; }
         g#features path.wrong { fill: #e74c3c !important; animation: shake 0.4s; }
         g#features path.revealed { fill: #e67e22 !important; stroke: #d35400 !important; pointer-events: none; }
 
-        /* Yazılar */
         text.map-label {
             font-family: 'Arial Black', sans-serif;
-            font-size: 11px;
+            font-size: 12px;
             font-weight: 900;
             fill: #2c3e50;
             pointer-events: none;
@@ -82,27 +87,27 @@
 
         circle, g[id="points"], g[id="label_points"] { display: none; pointer-events: none; }
 
-        /* --- ARAYÜZ (AYRIK PANEL) --- */
+        /* --- ARAYÜZ (HUD) --- */
         #ui-layer {
             position: absolute; top: 0; left: 0; width: 100%; height: 100%;
             z-index: 50; pointer-events: none;
         }
         #ui-layer > * { pointer-events: auto; }
 
-        /* SOL ÜST: SORU */
+        /* SOL PANEL */
         #hud-left {
             position: absolute; top: 15px; left: 15px;
             background: rgba(255, 255, 255, 0.95);
             padding: 8px 15px; border-radius: 15px;
             border: 3px solid #fff;
             box-shadow: 0 4px 10px rgba(0,0,0,0.3);
-            max-width: 35%; min-width: 140px;
+            max-width: 40%; min-width: 140px;
             display: flex; flex-direction: column; justify-content: center;
         }
         #q-prefix { font-size: 0.7rem; color: #7f8c8d; font-weight: 800; margin-bottom: 2px; }
         #target-city { color: #c0392b; font-size: 1.2rem; font-weight: 900; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 
-        /* SAĞ ÜST: İSTATİSTİK VE BUTONLAR */
+        /* SAĞ PANEL */
         #hud-right {
             position: absolute; top: 15px; right: 15px;
             display: flex; flex-direction: column; gap: 8px;
@@ -132,7 +137,7 @@
         .btn-hint { background: #f39c12; }
         .btn-menu { background: #95a5a6; }
 
-        /* --- GİRİŞ EKRANI (DÜZELTİLDİ: 2x2 IZGARA) --- */
+        /* --- GİRİŞ EKRANI --- */
         #start-screen {
             position: absolute; top: 0; left: 0; width: 100%; height: 100%;
             background: rgba(44, 62, 80, 1);
@@ -144,30 +149,24 @@
             display: flex; flex-direction: column; align-items: center;
             width: 100%; max-width: 500px;
         }
-        
         .mode-container { 
             display: grid; 
-            grid-template-columns: 1fr 1fr; /* 2 Sütun */
-            gap: 15px; 
-            width: 90%; 
-            margin-top: 20px;
+            grid-template-columns: 1fr 1fr; 
+            gap: 15px; width: 90%; margin-top: 20px;
         }
-
         .mode-btn {
             background: #3498db; color: white; border: none;
             padding: 20px 10px; border-radius: 15px;
             font-size: 1.1rem; font-weight: bold; cursor: pointer;
-            width: 100%; /* Kutusunu doldur */
-            box-shadow: 0 5px 0 #2980b9; transition: 0.1s;
-            text-align: center;
-            display: flex; align-items: center; justify-content: center;
+            width: 100%; box-shadow: 0 5px 0 #2980b9; transition: 0.1s;
+            text-align: center; display: flex; align-items: center; justify-content: center;
         }
         .mode-btn:active { transform: translateY(4px); box-shadow: none; }
         .mode-btn.plate { background: #e67e22; box-shadow: 0 5px 0 #d35400; }
         .mode-btn.famous { background: #9b59b6; box-shadow: 0 5px 0 #8e44ad; }
         .mode-btn.karma { 
             background: #e74c3c; box-shadow: 0 5px 0 #c0392b; 
-            grid-column: span 2; /* Alt satırda boydan boya kapla */
+            grid-column: span 2; 
         }
 
         /* --- OYUN SONU RAPORU --- */
@@ -190,7 +189,6 @@
             border: 4px solid #f1c40f;
         }
 
-        /* YÜZEN MESAJ */
         #feedback-overlay {
             position: absolute; top: 50%; left: 50%;
             transform: translate(-50%, -50%);
@@ -204,7 +202,6 @@
         @keyframes shake { 0%, 100% { transform: translateX(0); } 25% { transform: translateX(-5px); } 75% { transform: translateX(5px); } }
         @keyframes popIn { from { transform: scale(0.5); opacity: 0; } to { transform: scale(1); opacity: 1; } }
 
-        /* MOBİL YATAY MOD */
         @media screen and (max-height: 500px) and (orientation: landscape) {
             .start-content { transform: scale(0.7); }
             #hud-left { top: 5px; left: 10px; padding: 5px 12px; }
@@ -216,7 +213,7 @@
 </head>
 <body>
 
-    <!-- GİRİŞ EKRANI (DÜZENLENDİ) -->
+    <!-- GİRİŞ EKRANI -->
     <div id="start-screen">
         <div class="start-content">
             <h2 style="margin-bottom: 10px;">🇹🇷 Harita Oyunu</h2>
@@ -242,7 +239,7 @@
             <div class="stats-group">
                 <div class="stat-item" id="timer-box" style="display:none;">
                     <span class="stat-val val-timer" id="timer">60</span>
-                    <span class="stat-lbl">sn</span>
+                    <span class="stat-lbl">SÜRE</span>
                 </div>
                 <div class="stat-item">
                     <span class="stat-val val-score" id="correct-count">0</span>
@@ -254,8 +251,8 @@
                 </div>
             </div>
             <div class="btn-group">
-                <button class="action-btn btn-hint" onclick="useHint()" title="Pas Geç / Göster">💡</button>
-                <button class="action-btn btn-menu" onclick="resetGame()" title="Menü">🏠</button>
+                <button class="action-btn btn-hint" onmousedown="stopDragProp(event)" ontouchstart="stopDragProp(event)" onclick="useHint()" title="Pas Geç / Göster">💡</button>
+                <button class="action-btn btn-menu" onmousedown="stopDragProp(event)" ontouchstart="stopDragProp(event)" onclick="resetGame()" title="Menü">🏠</button>
             </div>
         </div>
     </div>
@@ -284,9 +281,10 @@
         <svg baseprofile="tiny" fill="#6f9c76" height="422" stroke="#ffffff" stroke-linecap="round" stroke-linejoin="round" stroke-width=".5" version="1.2" viewbox="0 0 1000 422" width="1000" xmlns="http://www.w3.org/2000/svg">
             
             <!-- ZOOM ve PAN İÇİN GRUP -->
-            <g id="features">
-                <!-- BURAYA ELİNDEKİ SVG KODUNUN TAMAMINI YAPIŞTIR -->
-                <svg baseprofile="tiny" fill="#6f9c76" height="422" stroke="#ffffff" stroke-linecap="round" stroke-linejoin="round" stroke-width=".5" version="1.2" viewbox="0 0 1000 422" width="1000" xmlns="http://www.w3.org/2000/svg">
+            <g id="map-viewport">
+                <g id="features">
+                    <!-- BURAYA ELİNDEKİ SVG KODUNUN TAMAMINI YAPIŞTIR -->
+                    <svg baseprofile="tiny" fill="#6f9c76" height="422" stroke="#ffffff" stroke-linecap="round" stroke-linejoin="round" stroke-width=".5" version="1.2" viewbox="0 0 1000 422" width="1000" xmlns="http://www.w3.org/2000/svg">
  <g id="features">
   <path d="M889.7 82.2l-3.1 1.1-4.8 2.7-7.7 3.3-7.8 3.3-5.7 3-1.1 4.8-0.7 7.5-0.9 4.5-5.7 0.6-5.5 1.1-1.4-2.6-1.9-1.9-1.4-2.1-1-2.4-1.3-1.7-1.8-1.2-2.4-3.7-1-4.9 3-5.9 4.1-4.6 4-2 1.2-4.2-1.3-4.4-0.9-2.3-0.4-0.7-0.5-1.5-0.3-2.7-0.7-3.6 0.5 0 1-0.7 1.4-2.2 1.1-1 0.5-1.1 0.4-2.6 0.5-1 0.9-0.8 0.1 0 0.2 0 0.9-0.4 2.4-0.2 6.7 0.6 0.9 0.4-0.4 0.6-0.1 0.7-0.1 0.6-0.2 0.6-0.4 0.4-1 0.8-0.4 0.7 1.3 0.7 0.9 1 0.9 0.3 1.1-1.4 0.7-0.4 0.3 0.4 0.3 0.8 0.4 0.7 0.3 0.3 1.4 0.4 0.3 0.3 0.2 0.3 0.2 0.2 0.5 0.2 0.3 0.4 1.4 2.7 0.7 0.8 3.5 2.4 2.3 2 1.5 0.7 1.4 0.2 0 0.3-0.6 0.9-0.7 0.6-2.6 1.3 1.3 0.4 1.1-0.1 0.9 0.1 1 1.1 1.1 2.8 0.7 0.5 4.4-1.2 1.3-0.1 1.5 0.4 1.3 0.8 1.3 1.2 0.7 1.5-0.5 1.6z" id="TR75" name="Ardahan">
   </path>
@@ -624,17 +622,16 @@
   </circle>
  </g>
 </svg>
+                </g>
+                <g id="points"></g>
+                <g id="label_points"></g>
+                <g id="map-labels" style="pointer-events: none;"></g>
             </g>
-            <g id="points"></g>
-            <g id="label_points"></g>
-            <g id="map-labels" style="pointer-events: none;"></g>
 
         </svg>
-        <!-- SVG BİTİŞİ -->
     </div>
 
     <script>
-        // --- VERİ TABANI ---
         const cityFacts = {
             "TR01": ["Kebap", "Şalgam Suyu", "Taş Köprü", "01", "Bici Bici", "Pamuk"],
             "TR02": ["Nemrut Dağı", "Cendere Köprüsü", "Besni Üzümü", "Menzil", "Karakuş Tümülüsü"],
@@ -730,7 +727,7 @@
         let timerInterval = null;
         let isGameActive = false;
 
-        // --- ZOOM & PAN DEĞİŞKENLERİ ---
+        // --- ZOOM & PAN ---
         let viewBox = { x: 0, y: 0, w: 1000, h: 422 };
         const originalViewBox = { ...viewBox };
         const svgContainer = document.getElementById('map-container');
@@ -743,6 +740,8 @@
         document.addEventListener("DOMContentLoaded", () => {
             parseMapData();
             setupMapInteractions();
+            // Tam ekranı otomatik tetikleme (Kullanıcı etkileşimi gerekebilir)
+            document.documentElement.requestFullscreen().catch((e) => {});
         });
 
         function parseMapData() {
@@ -760,20 +759,16 @@
                     const factsList = cityFacts[id] || ["Bilgi Yok"];
                     cityData.push({ id, name, plate: plateNumber, factsList });
                     
-                    // Button veya hareket yoksa tıkla
                     path.addEventListener('click', (e) => {
-                         // Eğer pan yapılıyorsa tıklamayı engelle (Basit kontrol)
                          if(!isPanning) handleCityClick(e);
                     });
                 }
             });
         }
 
-        // --- GELİŞMİŞ HARİTA MOTORU (Zoom & Pan) ---
+        // --- HARİTA KONTROLLERİ ---
         function setupMapInteractions() {
-            const svgElement = document.querySelector("svg");
-
-            // 1. MOUSE WHEEL ZOOM
+            // MOUSE WHEEL ZOOM
             svgContainer.addEventListener("wheel", (e) => {
                 e.preventDefault();
                 const w = viewBox.w;
@@ -788,7 +783,7 @@
                 let newH = h + dhh;
 
                 if (originalViewBox.w / newW > 10) return; // Max Zoom
-                if (originalViewBox.w / newW < 1) {       // Min Zoom
+                if (originalViewBox.w / newW < 1) {       
                     viewBox = { ...originalViewBox };
                     updateViewBox(); return;
                 }
@@ -799,7 +794,7 @@
                 updateViewBox();
             }, { passive: false });
 
-            // 2. MOUSE/TOUCH PAN
+            // PAN & PINCH ZOOM
             svgContainer.addEventListener("mousedown", startPan);
             svgContainer.addEventListener("touchstart", (e) => {
                 if (e.touches.length === 1) startPan(e.touches[0]);
@@ -869,18 +864,28 @@
             svgElement.setAttribute("viewBox", `${viewBox.x} ${viewBox.y} ${viewBox.w} ${viewBox.h}`);
         }
 
-
-        // --- OYUN MANTIĞI ---
+        // --- OYUN FONKSİYONLARI ---
         function startGame(mode) {
+            // Tam ekranı tetikle
+            try {
+                if (document.documentElement.requestFullscreen) {
+                    document.documentElement.requestFullscreen();
+                } else if (document.documentElement.webkitRequestFullscreen) { /* Safari */
+                    document.documentElement.webkitRequestFullscreen();
+                } else if (document.documentElement.msRequestFullscreen) { /* IE11 */
+                    document.documentElement.msRequestFullscreen();
+                }
+            } catch(e) { console.log("Tam ekran desteklenmiyor"); }
+
             gameMode = mode;
             correctCount = 0; wrongCount = 0; foundCities = []; isGameActive = true;
-
-            // Zoom Reset
+            
             viewBox = { ...originalViewBox }; updateViewBox();
 
             document.getElementById('start-screen').style.display = 'none';
             document.getElementById('ui-layer').style.display = 'block';
             document.getElementById('game-over-modal').style.display = 'none';
+
             document.getElementById('correct-count').textContent = '0';
             document.getElementById('wrong-count').textContent = '0';
             document.getElementById('map-labels').innerHTML = ''; 
@@ -954,13 +959,6 @@
             text.setAttribute("x", centerX); text.setAttribute("y", centerY);
             text.setAttribute("class", "map-label");
             text.textContent = textContent;
-            
-            // Zoom seviyesine göre yazı boyutunu ters orantılı ayarla (Hep okunur kalsın)
-            const currentZoom = originalViewBox.w / viewBox.w;
-            if(currentZoom > 1) {
-                // text.setAttribute("font-size", 10 / currentZoom); // İstenirse açılabilir
-            }
-
             document.getElementById('map-labels').appendChild(text);
         }
 
@@ -995,7 +993,9 @@
             if (targetElement) {
                 targetElement.classList.add('revealed');
                 foundCities.push(currentTarget.id);
-                addLabelToMap(currentTarget.id, currentTarget.answerText);
+                let answer = currentTarget.name;
+                if(gameMode === 'plate') answer = currentTarget.plate;
+                addLabelToMap(currentTarget.id, answer);
                 showFeedback(`Cevap: ${currentTarget.name}`, "#f39c12", 1500);
                 setTimeout(nextTurn, 1500);
             }
@@ -1004,28 +1004,24 @@
         function endGame() {
             isGameActive = false;
             clearInterval(timerInterval);
-
-            // GELİŞMİŞ ALGORİTMA
-            // Net Skor = Doğru - (Yanlış * 0.5)
-            // Eğer süre moduysa ve süre bittiyse (60sn), puanı biraz daha cömert verelim
             
-            let netScore = correctCount - (wrongCount * 0.5);
+            // --- OYUN SONU RAPORU ---
+            const total = correctCount + wrongCount;
             let finalGrade = "F";
             let gradeText = "Tekrar Dene";
             let gradeColor = "#7f8c8d";
+            let accuracy = total > 0 ? (correctCount / total) : 0;
 
             if (gameMode === 'mixed') {
-                if (netScore >= 20) { finalGrade = "S"; gradeText = "EFSANE!"; gradeColor = "#f1c40f"; }
-                else if (netScore >= 15) { finalGrade = "A"; gradeText = "Mükemmel"; gradeColor = "#2ecc71"; }
-                else if (netScore >= 10) { finalGrade = "B"; gradeText = "Çok İyi"; gradeColor = "#3498db"; }
-                else if (netScore >= 5) { finalGrade = "C"; gradeText = "İyi"; gradeColor = "#9b59b6"; }
-                else if (netScore >= 0) { finalGrade = "D"; gradeText = "Geliştirilmeli"; gradeColor = "#e67e22"; }
+                // Karma Mod: Hız ve doğruluk
+                let scoreCalc = correctCount - (wrongCount * 0.5);
+                if (scoreCalc >= 25) { finalGrade = "S"; gradeText = "EFSANEVİ!"; gradeColor = "#f1c40f"; }
+                else if (scoreCalc >= 20) { finalGrade = "A"; gradeText = "Mükemmel"; gradeColor = "#2ecc71"; }
+                else if (scoreCalc >= 15) { finalGrade = "B"; gradeText = "Çok İyi"; gradeColor = "#3498db"; }
+                else if (scoreCalc >= 10) { finalGrade = "C"; gradeText = "İyi"; gradeColor = "#9b59b6"; }
+                else { finalGrade = "D"; gradeText = "Geliştirilmeli"; gradeColor = "#e67e22"; }
             } else {
-                // Normal modda (Süre yok, tüm haritayı bitirene kadar)
-                // Toplam il 81. Orana bak.
-                const totalAttempts = correctCount + wrongCount;
-                let accuracy = totalAttempts > 0 ? (correctCount / totalAttempts) : 0;
-
+                // Normal Mod: Sadece doğruluk
                 if (correctCount >= 80 && accuracy > 0.95) { finalGrade = "S+"; gradeText = "TÜRKİYE PROFESÖRÜ"; gradeColor = "#f1c40f"; }
                 else if (correctCount >= 50 && accuracy > 0.9) { finalGrade = "A"; gradeText = "Harika!"; gradeColor = "#2ecc71"; }
                 else if (accuracy > 0.8) { finalGrade = "B"; gradeText = "Güzel"; gradeColor = "#3498db"; }
@@ -1035,14 +1031,12 @@
 
             document.getElementById('final-score').textContent = correctCount;
             document.getElementById('final-wrong').textContent = wrongCount;
-            
             const gradeEl = document.getElementById('final-grade');
             gradeEl.textContent = finalGrade;
             gradeEl.style.color = gradeColor;
             gradeEl.style.borderColor = gradeColor;
             document.getElementById('grade-text').textContent = gradeText;
             document.getElementById('grade-text').style.color = gradeColor;
-
             document.getElementById('game-over-modal').style.display = 'flex';
         }
 
@@ -1062,6 +1056,8 @@
             document.getElementById('start-screen').style.display = 'flex';
             viewBox = { ...originalViewBox }; updateViewBox();
         }
+
+        function stopDragProp(e) { e.stopPropagation(); }
     </script>
 </body>
 </html>
