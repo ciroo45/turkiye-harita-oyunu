@@ -10,6 +10,7 @@
     <title>Map Master Pro - Ultimate Mobile</title>
     <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
     <style>
+      
         /* --- TEMEL AYARLAR --- */
         * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; outline: none; touch-action: none; }
         
@@ -1043,150 +1044,95 @@
     "ZW": { n: "Zimbabve", cap: "Harare", lang: "İngilizce", fl: "🇿🇼", cur: "Dolar", pop: "15M", f: "Büyük Zimbabve", facts: ["Viktorya Şelalesi'ni Zambiya ile paylaşır.", "Tarihi taş yapılar (Büyük Zimbabve) buradadır.", "Enflasyon rekorları kırmıştır (Trilyon dolarlık banknotlar).", "Eğitim oranı Afrika'da yüksektir.", "Totem kültürü yaygındır."] }
 };
 // --- 2. OYUN DEĞİŞKENLERİ ---
-        let currentCat = 'tr'; 
-        let currentMode = 'name'; 
-        let isGameActive = false;
-        let currentTarget = null; 
-        let foundItems = []; 
-        let correctCount = 0; 
-        let wrongCount = 0;
-        let timer = 60; 
-        let timerInterval = null; 
+        let currentCat = 'tr'; let currentMode = 'name'; let isGameActive = false;
+        let currentTarget = null; let foundItems = []; let correctCount = 0; let wrongCount = 0;
+        let timer = 60; let timerInterval = null; 
         
-        // Zoom Değişkenleri
+        // --- ZOOM MOTORU DEĞİŞKENLERİ ---
         let currentScale = 1; 
         let currentTranslate = { x: 0, y: 0 };
         let lastTouchDistance = 0; 
         let isDragging = false; 
         let startDrag = { x: 0, y: 0 };
+        let initialPinchCenter = { x: 0, y: 0 }; // Pinch merkezi için
         
         const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
 
         // --- 3. BAŞLANGIÇ AYARLARI ---
-        window.onload = () => { 
-            setTimeout(() => { 
-                document.getElementById('intro-screen').style.opacity = '0'; 
-                setTimeout(() => { 
-                    document.getElementById('intro-screen').style.display = 'none'; 
-                    document.getElementById('start-screen').style.display = 'flex'; 
-                }, 800); 
-            }, 2000); 
-        };
+        window.onload = () => { setTimeout(() => { document.getElementById('intro-screen').style.opacity = '0'; setTimeout(() => { document.getElementById('intro-screen').style.display = 'none'; document.getElementById('start-screen').style.display = 'flex'; }, 800); }, 2000); };
 
-        function requestFullScreen() { 
-            const e = document.documentElement; 
-            if(e.requestFullscreen) e.requestFullscreen().catch(()=>{}); 
-            else if(e.webkitRequestFullscreen) e.webkitRequestFullscreen(); 
-        }
+        function requestFullScreen() { const e = document.documentElement; if(e.requestFullscreen) e.requestFullscreen().catch(()=>{}); else if(e.webkitRequestFullscreen) e.webkitRequestFullscreen(); }
 
-        // --- 4. MENÜ VE MOD SEÇİMİ ---
+        // --- 4. MENÜ VE MODLAR ---
         function openModes(cat) {
-            requestFullScreen(); 
-            currentCat = cat; 
-            
-            // Ekran geçişi
-            document.getElementById('cat-step').style.display = 'none'; 
-            document.getElementById('mode-step').style.display = 'flex';
+            requestFullScreen(); currentCat = cat; document.getElementById('cat-step').style.display = 'none'; document.getElementById('mode-step').style.display = 'flex';
             document.getElementById('mode-title').textContent = cat === 'tr' ? "TÜRKİYE MODLARI" : "DÜNYA MODLARI";
-            
-            // Butonları oluştur
             let h = `<button class="mode-btn" onclick="startGame('name')">${cat==='tr'?'Şehir':'Ülke'} İsmi</button>`;
             if(cat==='tr') h += `<button class="mode-btn" style="background:#e67e22" onclick="startGame('plate')">Plaka Kodu</button>`;
             h += `<button class="mode-btn" style="background:#9b59b6" onclick="startGame('famous')">Meşhur Nesi?</button><button class="mode-btn karma" onclick="startGame('mixed')">Karma Mod (⏱️1dk)</button>`;
             document.getElementById('dynamic-modes').innerHTML = h;
         }
 
-        function backToCat() { 
-            document.getElementById('mode-step').style.display = 'none'; 
-            document.getElementById('cat-step').style.display = 'block'; 
-        }
+        function backToCat() { document.getElementById('mode-step').style.display = 'none'; document.getElementById('cat-step').style.display = 'block'; }
 
-        // --- 5. OYUNU BAŞLATMA (DÜZELTİLEN KISIM) ---
+        // --- 5. OYUNU BAŞLATMA ---
         function startGame(mode) {
-            currentMode = mode; 
-            isGameActive = true; 
-            foundItems = []; 
-            correctCount = 0; 
-            wrongCount = 0;
+            currentMode = mode; isGameActive = true; foundItems = []; correctCount = 0; wrongCount = 0;
+            document.getElementById('start-screen').style.display = 'none'; document.getElementById('ui-layer').style.display = 'block';
             
-            // UI Geçişi
-            document.getElementById('start-screen').style.display = 'none'; 
-            document.getElementById('ui-layer').style.display = 'block';
-            
-            // Harita Seçimi
             document.querySelectorAll('.map-wrapper').forEach(w => w.classList.remove('active'));
-            const activeWrap = document.getElementById(currentCat + '-wrapper'); 
-            activeWrap.classList.add('active');
+            const activeWrap = document.getElementById(currentCat + '-wrapper'); activeWrap.classList.add('active');
             
             const svg = activeWrap.querySelector('svg');
             if(svg) {
-                // viewBox kontrolü
                 if(!svg.getAttribute('viewBox')) svg.setAttribute("viewBox", "0 0 1010 650");
                 
-                // *** KRİTİK: HARİTAYI SIFIRLA ***
-                clearMapVisuals(svg); // Renkleri ve yazıları sil
-                resetZoom(svg);       // Zoom'u sıfırla
-                refreshMapEvents(svg);// Tıklama olaylarını yenile
-                initMapControls(document.getElementById('map-container'), svg); // Zoom motorunu başlat
+                clearMapVisuals(svg); 
+                resetZoom(svg); 
+                refreshMapEvents(svg); 
+                
+                // Eski event listener'ları temizlemek için klonlama yöntemi (Garanti çözüm)
+                const newSvg = svg.cloneNode(true);
+                svg.parentNode.replaceChild(newSvg, svg);
+                
+                // Yeni SVG üzerinden kontrol başlat
+                refreshMapEvents(newSvg);
+                initMapControls(document.getElementById('map-container'), newSvg);
             }
 
-            // Skorları Sıfırla
-            document.getElementById('correct-count').textContent = '0'; 
-            document.getElementById('wrong-count').textContent = '0';
+            document.getElementById('correct-count').textContent = '0'; document.getElementById('wrong-count').textContent = '0';
             
-            // Zamanlayıcı
-            if(mode === 'mixed') { 
-                document.getElementById('timer-box').style.display = 'block'; 
-                timer = 60; 
-                startTimer(); 
-            } else { 
-                document.getElementById('timer-box').style.display = 'none'; 
-                clearInterval(timerInterval); 
-            }
+            if(mode === 'mixed') { document.getElementById('timer-box').style.display = 'block'; timer = 60; startTimer(); } 
+            else { document.getElementById('timer-box').style.display = 'none'; clearInterval(timerInterval); }
             
             nextTurn();
         }
 
-        // --- 6. HARİTA TEMİZLİK VE KONTROL (YENİ) ---
         function clearMapVisuals(svg) {
-            // 1. Önceki oyundan kalan renkli sınıfları (correct, wrong, revealed) temizle
-            svg.querySelectorAll('path').forEach(p => {
-                p.classList.remove('correct', 'wrong', 'revealed');
-                p.style.fill = ''; // Eğer inline stil varsa onu da sil
-            });
-
-            // 2. Harita üzerindeki yazıları (label) sil
-            const labels = svg.querySelectorAll('.map-label');
-            labels.forEach(label => label.remove());
+            svg.querySelectorAll('path').forEach(p => { p.classList.remove('correct', 'wrong', 'revealed'); p.style.fill = ''; });
+            svg.querySelectorAll('.map-label').forEach(l => l.remove());
         }
 
         function refreshMapEvents(svg) {
-            // Önce eski eventleri temizlemek için klonlama yapılabilir ama 
-            // basitçe tekrar atamak yeterli olacaktır çünkü onclick üzerine yazıyoruz.
-            svg.querySelectorAll('g#features path').forEach(p => {
-                // Masaüstü tıklama
-                p.onclick = (e) => { 
+            svg.querySelectorAll('g#features path, .land').forEach(p => {
+                // Sadece touchend ve click, drag kontrolü ile
+                p.addEventListener('click', (e) => { 
                     if(!isDragging && isGameActive) handleMapClick(e.target); 
-                };
-                // Mobil dokunma
-                p.ontouchend = (e) => { 
+                });
+                p.addEventListener('touchend', (e) => { 
                     if(!isDragging && isGameActive) { 
                         e.preventDefault(); 
                         handleMapClick(e.target); 
                     } 
-                };
+                });
             });
         }
 
-        // --- 7. ZOOM VE PAN MOTORU ---
-        function resetZoom(svg) { 
-            currentScale = 1; 
-            currentTranslate = { x: 0, y: 0 }; 
-            updateTransform(svg); 
-        }
-
+        // --- 7. ULTIMATE ZOOM MOTORU (60x Zoom + Akıllı Sınır) ---
+        function resetZoom(svg) { currentScale = 1; currentTranslate = { x: 0, y: 0 }; updateTransform(svg); }
+        
         function initMapControls(container, svg) {
-            // Mouse (Masaüstü)
+            // MOUSE (PC)
             container.onmousedown = (e) => { 
                 isDragging = false; 
                 startDrag = { x: e.clientX, y: e.clientY }; 
@@ -1195,20 +1141,24 @@
                     currentTranslate.x += me.clientX - startDrag.x; 
                     currentTranslate.y += me.clientY - startDrag.y; 
                     startDrag = { x: me.clientX, y: me.clientY }; 
+                    limitBounds(container); 
                     updateTransform(svg); 
                 }; 
             };
-            window.onmouseup = () => { 
-                container.onmousemove = null; 
-                setTimeout(()=>isDragging=false, 50); 
-            };
+            window.onmouseup = () => { container.onmousemove = null; setTimeout(()=>isDragging=false, 50); };
             
             container.onwheel = (e) => { 
                 e.preventDefault(); 
-                applyZoom(e.deltaY > 0 ? 0.9 : 1.1, svg); 
+                // Mouse ile zoom yaparken imlece doğru zoom
+                const rect = container.getBoundingClientRect();
+                const mouseX = e.clientX - rect.left;
+                const mouseY = e.clientY - rect.top;
+                const factor = e.deltaY > 0 ? 0.9 : 1.1;
+                
+                zoomToPoint(factor, mouseX, mouseY, container, svg);
             };
 
-            // Dokunmatik (Mobil)
+            // TOUCH (MOBİL)
             container.ontouchstart = (e) => { 
                 if (e.touches.length === 1) { 
                     isDragging = false; 
@@ -1216,123 +1166,142 @@
                 } else if (e.touches.length === 2) { 
                     isDragging = true; 
                     lastTouchDistance = Math.hypot(e.touches[0].clientX - e.touches[1].clientX, e.touches[0].clientY - e.touches[1].clientY); 
+                    // Pinch merkezi
+                    initialPinchCenter = {
+                        x: (e.touches[0].clientX + e.touches[1].clientX) / 2,
+                        y: (e.touches[0].clientY + e.touches[1].clientY) / 2
+                    };
                 } 
             };
             
             container.ontouchmove = (e) => { 
                 e.preventDefault(); 
                 if (e.touches.length === 1) { 
-                    if(Math.abs(e.touches[0].clientX - startDrag.x) > 5) isDragging = true; 
-                    currentTranslate.x += e.touches[0].clientX - startDrag.x; 
-                    currentTranslate.y += e.touches[0].clientY - startDrag.y; 
+                    const dx = e.touches[0].clientX - startDrag.x;
+                    const dy = e.touches[0].clientY - startDrag.y;
+                    if(Math.abs(dx) > 3 || Math.abs(dy) > 3) isDragging = true; 
+                    
+                    currentTranslate.x += dx; 
+                    currentTranslate.y += dy; 
                     startDrag = { x: e.touches[0].clientX, y: e.touches[0].clientY }; 
+                    limitBounds(container); 
                     updateTransform(svg); 
                 } else if (e.touches.length === 2) { 
                     const dist = Math.hypot(e.touches[0].clientX - e.touches[1].clientX, e.touches[0].clientY - e.touches[1].clientY); 
-                    applyZoom(dist / lastTouchDistance, svg); 
-                    lastTouchDistance = dist; 
+                    const factor = dist / lastTouchDistance;
+                    lastTouchDistance = dist;
+                    
+                    // İki parmağın ortasına doğru zoom
+                    const currentCenter = {
+                        x: (e.touches[0].clientX + e.touches[1].clientX) / 2,
+                        y: (e.touches[0].clientY + e.touches[1].clientY) / 2
+                    };
+                    
+                    zoomToPoint(factor, currentCenter.x, currentCenter.y, container, svg);
                 } 
             };
         }
 
-        function applyZoom(factor, svg) { 
-            currentScale *= factor; 
-            if (currentScale < 1) { currentScale = 1; currentTranslate = {x:0, y:0}; } // Minimum zoom (Sıfırlama)
-            if (currentScale > 15) currentScale = 15; // Maksimum zoom sınırı
-            updateTransform(svg); 
+        // Noktaya Doğru Zoom (Belçika gibi küçük yerler için kritik)
+        function zoomToPoint(factor, x, y, container, svg) {
+            const oldScale = currentScale;
+            let newScale = currentScale * factor;
+            
+            // ZOOM SINIRLARI (ARTIRILDI)
+            if (newScale < 1) newScale = 1; 
+            if (newScale > 60) newScale = 60; // 60x Zoom (Belçika'yı görmek için)
+
+            // Zoom yaparken kaydırma hesabı (Mouse/Parmak pozisyonunu koru)
+            currentTranslate.x -= (x - currentTranslate.x) * (newScale / oldScale - 1);
+            currentTranslate.y -= (y - currentTranslate.y) * (newScale / oldScale - 1);
+            
+            currentScale = newScale;
+            limitBounds(container);
+            updateTransform(svg);
+        }
+
+        // AKILLI SINIRLAR (Harita Kaybolmaz)
+        function limitBounds(container) {
+            const width = container.clientWidth;
+            const height = container.clientHeight;
+            
+            // Harita boyutları
+            const mapW = width * currentScale;
+            const mapH = height * currentScale;
+
+            // Eğer harita ekrandan küçükse (zoom out), ortala
+            if (currentScale <= 1) {
+                currentTranslate.x = 0;
+                currentTranslate.y = 0;
+                return;
+            }
+
+            // Harita ekrandan büyükse, kenarların ekranın yarısına kadar gelmesine izin ver
+            // Bu sayede en köşedeki adaları bile merkeze çekebilirsin.
+            const minX = width - mapW + (width / 2);
+            const maxX = - (width / 2); // Sol taraf biraz boşluk bırakabilir
+            
+            const minY = height - mapH + (height / 2);
+            const maxY = - (height / 2);
+
+            // Daha esnek sınırlar (Kaybolmayı önler ama serbestlik verir)
+            // Mantık: Haritanın herhangi bir kenarı, ekranın merkezini geçemez.
+            const borderX = width / 2;
+            const borderY = height / 2;
+
+            if (currentTranslate.x > borderX) currentTranslate.x = borderX;
+            if (currentTranslate.x < width - mapW - borderX) currentTranslate.x = width - mapW - borderX;
+            
+            if (currentTranslate.y > borderY) currentTranslate.y = borderY;
+            if (currentTranslate.y < height - mapH - borderY) currentTranslate.y = height - mapH - borderY;
         }
 
         function updateTransform(svg) { 
             if(svg) svg.style.transform = `translate(${currentTranslate.x}px, ${currentTranslate.y}px) scale(${currentScale})`; 
         }
 
-        // --- 8. OYUN MANTIĞI VE SORU SORMA ---
+        // --- 8. OYUN MANTIĞI ---
         function nextTurn() {
             if(!isGameActive) return;
             const dataSet = currentCat === 'tr' ? trData : worldData;
-            
-            // Henüz bulunmamışları filtrele
             const available = Object.keys(dataSet).filter(id => !foundItems.includes(id));
-            
             if(available.length === 0) { endGame(); return; }
-            
             const randomId = available[Math.floor(Math.random() * available.length)];
             currentTarget = { id: randomId, ...dataSet[randomId] };
-            
-            // Mod kontrolü
-            let qM = currentMode;
-            if(currentMode === 'mixed') {
-                const modes = currentCat === 'tr' ? ['name','plate','famous'] : ['name','famous'];
-                qM = modes[Math.floor(Math.random() * modes.length)];
-            }
-            
-            // Soruyu Ekrana Yaz
-            let questionText = "";
-            let prefixText = "";
-
-            if(qM === 'name') {
-                prefixText = currentCat === 'tr' ? "ŞEHRİ BUL" : "ÜLKEYİ BUL";
-                questionText = currentTarget.n;
-            } else if (qM === 'plate') {
-                prefixText = "PLAKAYI BUL";
-                questionText = currentTarget.p;
-            } else if (qM === 'famous') {
-                prefixText = "BURASI NERESİ?";
-                // Random bir fact seç
-                const randomFact = currentTarget.facts[Math.floor(Math.random() * currentTarget.facts.length)];
-                questionText = randomFact;
-            }
-
-            document.getElementById('q-prefix').textContent = prefixText;
-            document.getElementById('target-city').textContent = questionText;
-            
-            // Eğer soru çok uzunsa fontu küçült
-            if(questionText.length > 25) document.getElementById('target-city').style.fontSize = "0.9rem";
-            else document.getElementById('target-city').style.fontSize = "1.1rem";
+            let qM = currentMode === 'mixed' ? (currentCat === 'tr' ? ['name','plate','famous'] : ['name','famous'])[Math.floor(Math.random()*3)] : currentMode;
+            document.getElementById('q-prefix').textContent = (qM==='name') ? (currentCat==='tr'?"ŞEHRİ BUL":"ÜLKEYİ BUL") : (qM==='plate'?"PLAKAYI BUL":"BURASI NERESİ?");
+            document.getElementById('target-city').textContent = (qM==='famous') ? currentTarget.facts[Math.floor(Math.random()*currentTarget.facts.length)] : (qM==='plate'?currentTarget.p:currentTarget.n);
+            if(document.getElementById('target-city').textContent.length > 25) document.getElementById('target-city').style.fontSize = "0.9rem"; else document.getElementById('target-city').style.fontSize = "1.1rem";
         }
 
-        // --- 9. ETKİLEŞİM (TIKLAMA/CEVAP) ---
         function handleMapClick(el) {
             const id = el.getAttribute('id') ? el.getAttribute('id').toUpperCase() : "";
             const data = (currentCat === 'tr' ? trData : worldData)[id];
             
             if(id === currentTarget.id.toUpperCase()) {
-                // DOĞRU CEVAP
-                correctCount++; 
-                document.getElementById('correct-count').textContent = correctCount;
-                el.classList.add('correct'); 
-                foundItems.push(currentTarget.id);
-                addLabel(currentTarget.id, el); 
-                playSound('correct'); 
+                correctCount++; document.getElementById('correct-count').textContent = correctCount;
+                el.classList.add('correct'); foundItems.push(currentTarget.id);
+                addLabel(currentTarget.id, el); playSound('correct'); 
                 confetti({particleCount:50, spread:60, origin:{y:0.7}});
-                showToast(currentTarget.id); 
-                setTimeout(nextTurn, 600);
+                showToast(currentTarget.id); setTimeout(nextTurn, 600);
             } else {
-                // YANLIŞ CEVAP
-                wrongCount++; 
-                document.getElementById('wrong-count').textContent = wrongCount;
-                el.classList.add('wrong'); 
-                setTimeout(()=>el.classList.remove('wrong'),400); 
+                wrongCount++; document.getElementById('wrong-count').textContent = wrongCount;
+                el.classList.add('wrong'); setTimeout(()=>el.classList.remove('wrong'),400); 
                 playSound('wrong'); 
-                navigator.vibrate(200);
-                
-                // Hatalı basılan yerin ismini göster
                 let wrongName = data ? data.n : (el.getAttribute('name') || 'Bilinmiyor');
                 showFeedback(`Hayır! Orası: ${wrongName}`, "#e74c3c");
+                try { if(navigator.vibrate) navigator.vibrate(200); } catch(e){} 
             }
         }
 
         function addLabel(id, el) {
-            const bbox = el.getBBox(); 
-            const text = document.createElementNS("http://www.w3.org/2000/svg", "text");
-            text.setAttribute("x", bbox.x + bbox.width/2); 
-            text.setAttribute("y", bbox.y + bbox.height/2);
+            const bbox = el.getBBox(); const text = document.createElementNS("http://www.w3.org/2000/svg", "text");
+            text.setAttribute("x", bbox.x + bbox.width/2); text.setAttribute("y", bbox.y + bbox.height/2);
             text.setAttribute("class", "map-label");
-            
-            // Etikette ne yazacak?
+            // Zoom seviyesine göre yazı boyutunu ayarla (Çok zoomda dev gibi olmasın)
+            // Basit bir scale ters orantısı eklenebilir ama şu an standart bırakıyoruz.
             let labelText = currentTarget.n;
             if (currentMode === 'plate' && currentCat === 'tr') labelText = currentTarget.p;
-            
             text.textContent = labelText;
             el.parentNode.appendChild(text);
         }
@@ -1340,112 +1309,34 @@
         function useHint() {
             if(!currentTarget || !isGameActive) return;
             const el = document.getElementById(currentTarget.id);
-            if(el) { 
-                el.classList.add('revealed'); 
-                addLabel(currentTarget.id, el); 
-                foundItems.push(currentTarget.id); 
-                showToast(currentTarget.id); 
-                showFeedback(`Cevap: ${currentTarget.n}`, "#f1c40f"); 
-                setTimeout(nextTurn, 1500); 
-            }
+            if(el) { el.classList.add('revealed'); addLabel(currentTarget.id, el); foundItems.push(currentTarget.id); showToast(currentTarget.id); showFeedback(`Cevap: ${currentTarget.n}`, "#f1c40f"); setTimeout(nextTurn, 1500); }
         }
 
-        // --- 10. BİLGİ KARTI VE UI YARDIMCILARI ---
         function openInfo(id) {
-            const m = document.getElementById('info-modal'); 
-            const b = document.getElementById('card-content'); 
-            const h = document.querySelector('.card-header');
-            
-            const d = (currentCat === 'tr' ? trData : worldData)[id.toUpperCase()]; 
-            if(!d) return;
-            
+            const m = document.getElementById('info-modal'); const b = document.getElementById('card-content'); const h = document.querySelector('.card-header');
+            const d = (currentCat === 'tr' ? trData : worldData)[id.toUpperCase()]; if(!d) return;
             const fact = d.facts ? d.facts[Math.floor(Math.random() * d.facts.length)] : "Bilgi yok.";
             
             if(currentCat === 'tr') {
                 h.innerHTML = `<span class="card-flag" style="font-size:2rem;">🇹🇷</span><h2 class="card-title">${d.n}</h2><div class="card-subtitle">${d.desc||d.r}</div>`;
-                b.innerHTML = `<div class="info-grid">
-                    <div class="info-box"><span class="info-label">PLAKA</span><span class="info-val" style="color:#e67e22">${d.p}</span></div>
-                    <div class="info-box"><span class="info-label">NÜFUS</span><span class="info-val">${d.pop}</span></div>
-                    <div class="info-box" style="grid-column:span 2"><span class="info-label">MEŞHUR</span><span class="info-val">✨ ${d.f}</span></div>
-                </div>
-                <div class="fun-fact-box"><span class="fact-title">BUNU BİLİYOR MUYDUNUZ?</span>${fact}</div>`;
+                b.innerHTML = `<div class="info-grid"><div class="info-box"><span class="info-label">PLAKA</span><span class="info-val" style="color:#e67e22">${d.p}</span></div><div class="info-box"><span class="info-label">NÜFUS</span><span class="info-val">${d.pop}</span></div><div class="info-box" style="grid-column:span 2"><span class="info-label">MEŞHUR</span><span class="info-val">✨ ${d.f}</span></div></div><div class="fun-fact-box"><span class="fact-title">BUNU BİLİYOR MUYDUNUZ?</span>${fact}</div>`;
             } else {
                 h.innerHTML = `<span class="card-flag">${d.fl}</span><h2 class="card-title">${d.n}</h2><div class="card-subtitle">Dünya</div>`;
-                b.innerHTML = `<div class="info-grid">
-                    <div class="info-box"><span class="info-label">BAŞKENT</span><span class="info-val">${d.cap}</span></div>
-                    <div class="info-box"><span class="info-label">PARA</span><span class="info-val">${d.cur}</span></div>
-                    <div class="info-box" style="grid-column:span 2"><span class="info-label">MEŞHUR</span><span class="info-val">✨ ${d.f}</span></div>
-                </div>
-                <div class="fun-fact-box"><span class="fact-title">İLGİNÇ BİLGİ</span>${fact}</div>`;
+                b.innerHTML = `<div class="info-grid"><div class="info-box"><span class="info-label">BAŞKENT</span><span class="info-val">${d.cap}</span></div><div class="info-box"><span class="info-label">PARA</span><span class="info-val">${d.cur}</span></div><div class="info-box" style="grid-column:span 2"><span class="info-label">MEŞHUR</span><span class="info-val">✨ ${d.f}</span></div></div><div class="fun-fact-box"><span class="fact-title">İLGİNÇ BİLGİ</span>${fact}</div>`;
             }
             m.style.display = 'flex';
         }
 
-        function showFeedback(t, c) { 
-            const o = document.getElementById('feedback-overlay'); 
-            o.textContent = t; 
-            o.style.color = "#fff"; 
-            o.style.opacity = 1; 
-            setTimeout(()=>o.style.opacity=0, 1500); 
-        }
-        
-        function showToast(id) { 
-            const t = document.getElementById('info-toast'); 
-            t.style.display = 'block'; 
-            t.onclick = (e) => { e.stopPropagation(); openInfo(id); }; 
-            setTimeout(()=>t.style.display='none', 4000); 
-        }
-
-        function startTimer() { 
-            timerInterval = setInterval(() => { 
-                timer--; 
-                document.getElementById('timer').textContent = timer; 
-                if(timer<=0) endGame(); 
-            }, 1000); 
-        }
-
-        function endGame() { 
-            isGameActive = false; 
-            clearInterval(timerInterval); 
-            alert("Oyun Bitti! Skorun: " + correctCount); 
-            resetGame(); 
-        }
-
-        function resetGame() { 
-            isGameActive = false; 
-            clearInterval(timerInterval); 
-            document.getElementById('ui-layer').style.display='none'; 
-            document.getElementById('start-screen').style.display='flex'; 
-            
-            // Tüm haritaları gizle
-            document.querySelectorAll('.map-wrapper').forEach(w=>{
-                w.classList.remove('active');
-                // Oyundan çıkarken de temizlik yapalım
-                clearMapVisuals(w.querySelector('svg'));
-                resetZoom(w.querySelector('svg'));
-            }); 
-            
-            backToCat(); 
-        }
-
+        function showFeedback(t, c) { const o = document.getElementById('feedback-overlay'); o.textContent = t; o.style.color = "#fff"; o.style.opacity = 1; setTimeout(()=>o.style.opacity=0, 1500); }
+        function showToast(id) { const t = document.getElementById('info-toast'); t.style.display = 'block'; t.onclick = (e) => { e.stopPropagation(); openInfo(id); }; setTimeout(()=>t.style.display='none', 4000); }
+        function startTimer() { timerInterval = setInterval(() => { timer--; document.getElementById('timer').textContent = timer; if(timer<=0) endGame(); }, 1000); }
+        function endGame() { isGameActive = false; clearInterval(timerInterval); alert("Oyun Bitti! Skorun: " + correctCount); resetGame(); }
+        function resetGame() { isGameActive = false; clearInterval(timerInterval); document.getElementById('ui-layer').style.display='none'; document.getElementById('start-screen').style.display='flex'; document.querySelectorAll('.map-wrapper').forEach(w=>{ w.classList.remove('active'); clearMapVisuals(w.querySelector('svg')); resetZoom(w.querySelector('svg')); }); backToCat(); }
         function playSound(t) { 
-            const o = audioCtx.createOscillator(); 
-            const g = audioCtx.createGain(); 
-            o.connect(g); g.connect(audioCtx.destination); 
-            
-            if (t === 'correct') {
-                o.frequency.setValueAtTime(600, audioCtx.currentTime); 
-                o.frequency.exponentialRampToValueAtTime(1200, audioCtx.currentTime+0.1); 
-            } else {
-                o.type = 'sawtooth';
-                o.frequency.setValueAtTime(150, audioCtx.currentTime); 
-                o.frequency.exponentialRampToValueAtTime(50, audioCtx.currentTime+0.2); 
-            }
-            
-            g.gain.setValueAtTime(0.1, audioCtx.currentTime); 
-            g.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime+0.2); 
-            o.start(); 
-            o.stop(audioCtx.currentTime+0.2); 
+            const o = audioCtx.createOscillator(); const g = audioCtx.createGain(); o.connect(g); g.connect(audioCtx.destination); 
+            if (t === 'correct') { o.frequency.setValueAtTime(600, audioCtx.currentTime); o.frequency.exponentialRampToValueAtTime(1200, audioCtx.currentTime+0.1); } 
+            else { o.type = 'sawtooth'; o.frequency.setValueAtTime(150, audioCtx.currentTime); o.frequency.exponentialRampToValueAtTime(50, audioCtx.currentTime+0.2); }
+            g.gain.setValueAtTime(0.1, audioCtx.currentTime); g.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime+0.2); o.start(); o.stop(audioCtx.currentTime+0.2); 
         }
     </script>
 </body>
