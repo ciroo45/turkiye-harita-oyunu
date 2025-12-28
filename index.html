@@ -115,11 +115,11 @@
             filter: drop-shadow(0px 5px 15px rgba(0, 0, 0, 0.3));
         }
 
-        /* Harita Renkleri - Mobil için optimize edilmiş */
+        /* Harita Renkleri */
         g#features path {
             fill: #ecf0f1 !important;
-            stroke: #555 !important;
-            stroke-width: 0.5px !important;
+            stroke: #95a5a6;
+            stroke-width: 0.5px;
             transition: fill 0.15s;
             cursor: pointer;
             vector-effect: non-scaling-stroke;
@@ -2361,39 +2361,25 @@
         }
 
         function showFeedback(text, color) {
-            const overlay = document.getElementById('feedback-overlay');
-            if (!overlay) {
-                console.error('Feedback overlay bulunamadı!');
-                alert(text); // Fallback
-                return;
+            // iOS Safari'de overlay görünmüyorsa alert kullan
+            const isIOS = /iPhone|iPad|iPod/.test(navigator.userAgent);
+
+            if (isIOS) {
+                // iOS için native alert - GARANTİ ÇALIŞIR
+                setTimeout(() => alert(text), 100);
+            } else {
+                // Diğer cihazlar için overlay
+                const overlay = document.getElementById('feedback-overlay');
+                if (overlay) {
+                    overlay.textContent = text;
+                    overlay.style.visibility = 'visible';
+                    overlay.style.opacity = '1';
+                    setTimeout(() => {
+                        overlay.style.visibility = 'hidden';
+                        overlay.style.opacity = '0';
+                    }, 2000);
+                }
             }
-
-            // iOS Safari için doğrudan stil değişimi
-            overlay.textContent = text;
-            overlay.style.cssText = `
-                position: fixed !important;
-                top: 50% !important;
-                left: 50% !important;
-                transform: translate(-50%, -50%) !important;
-                -webkit-transform: translate(-50%, -50%) !important;
-                background: #e74c3c !important;
-                color: white !important;
-                padding: 20px 40px !important;
-                border-radius: 25px !important;
-                font-size: 20px !important;
-                font-weight: bold !important;
-                z-index: 999999 !important;
-                border: 3px solid white !important;
-                box-shadow: 0 10px 40px rgba(0,0,0,0.9) !important;
-                visibility: visible !important;
-                opacity: 1 !important;
-                pointer-events: none !important;
-            `;
-
-            setTimeout(() => {
-                overlay.style.visibility = 'hidden';
-                overlay.style.opacity = '0';
-            }, 2500);
         }
 
         function showToast(id) {
