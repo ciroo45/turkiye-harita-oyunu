@@ -115,15 +115,14 @@
             filter: drop-shadow(0px 5px 15px rgba(0, 0, 0, 0.3));
         }
 
-        /* Harita Renkleri - Mobil için ince sınırlar */
+        /* Harita Renkleri - Mobil için optimize edilmiş */
         g#features path {
             fill: #ecf0f1 !important;
-            stroke: #7f8c8d;
-            stroke-width: 0.3px;
+            stroke: #555 !important;
+            stroke-width: 0.5px !important;
             transition: fill 0.15s;
             cursor: pointer;
             vector-effect: non-scaling-stroke;
-            -webkit-vector-effect: non-scaling-stroke;
         }
 
         /* Zoom sırasında bulanıklığı önle */
@@ -468,31 +467,34 @@
             font-size: clamp(0.7rem, 2.5vw, 0.85rem);
         }
 
-        /* Feedback Overlay - iOS Safari için düzeltilmiş */
+        /* Feedback Overlay - iOS Safari GARANTI */
         #feedback-overlay {
-            position: fixed;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-            background: rgba(231, 76, 60, 0.98);
-            color: #fff;
-            padding: clamp(24px, 7vw, 32px) clamp(36px, 12vw, 60px);
-            border-radius: 50px;
-            font-size: clamp(1.3rem, 6vw, 2rem);
-            font-weight: 900;
-            pointer-events: none;
-            display: none;
-            z-index: 10000;
-            border: 4px solid #fff;
-            white-space: normal;
-            max-width: 90%;
-            text-align: center;
-            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.8);
-            -webkit-transform: translate(-50%, -50%);
+            position: fixed !important;
+            top: 50% !important;
+            left: 50% !important;
+            transform: translate(-50%, -50%) !important;
+            -webkit-transform: translate(-50%, -50%) !important;
+            background: #e74c3c !important;
+            color: #fff !important;
+            padding: 20px 40px !important;
+            border-radius: 25px !important;
+            font-size: 18px !important;
+            font-weight: 900 !important;
+            pointer-events: none !important;
+            visibility: hidden;
+            opacity: 0;
+            z-index: 999999 !important;
+            border: 3px solid #fff !important;
+            white-space: nowrap !important;
+            text-align: center !important;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.9) !important;
+            -webkit-transition: opacity 0.3s, visibility 0.3s;
+            transition: opacity 0.3s, visibility 0.3s;
         }
 
-        #feedback-overlay.visible {
-            display: block !important;
+        #feedback-overlay.show {
+            visibility: visible !important;
+            opacity: 1 !important;
         }
 
         #info-toast {
@@ -2358,17 +2360,40 @@
             m.style.display = 'flex';
         }
 
-        function showFeedback(t, c) {
-            const o = document.getElementById('feedback-overlay');
-            o.textContent = t;
-            o.style.color = "#fff";
-            // iOS Safari için display + class toggle (opacity güvenilmez)
-            o.classList.add('visible');
-            o.style.display = 'block';
+        function showFeedback(text, color) {
+            const overlay = document.getElementById('feedback-overlay');
+            if (!overlay) {
+                console.error('Feedback overlay bulunamadı!');
+                alert(text); // Fallback
+                return;
+            }
+
+            // iOS Safari için doğrudan stil değişimi
+            overlay.textContent = text;
+            overlay.style.cssText = `
+                position: fixed !important;
+                top: 50% !important;
+                left: 50% !important;
+                transform: translate(-50%, -50%) !important;
+                -webkit-transform: translate(-50%, -50%) !important;
+                background: #e74c3c !important;
+                color: white !important;
+                padding: 20px 40px !important;
+                border-radius: 25px !important;
+                font-size: 20px !important;
+                font-weight: bold !important;
+                z-index: 999999 !important;
+                border: 3px solid white !important;
+                box-shadow: 0 10px 40px rgba(0,0,0,0.9) !important;
+                visibility: visible !important;
+                opacity: 1 !important;
+                pointer-events: none !important;
+            `;
+
             setTimeout(() => {
-                o.classList.remove('visible');
-                o.style.display = 'none';
-            }, 2000);
+                overlay.style.visibility = 'hidden';
+                overlay.style.opacity = '0';
+            }, 2500);
         }
 
         function showToast(id) {
