@@ -114,13 +114,13 @@
             /* filter iOS'ta performans sorunu - kaldırıldı */
         }
 
-        /* Harita Renkleri */
+        /* Harita Renkleri - Dünya Haritası için ince sınırlar */
         g#features path {
             fill: #ecf0f1 !important;
-            stroke: #95a5a6;
-            stroke-width: 0.5px;
-            transition: fill 0.15s;
+            stroke: #7f8c8d;
+            stroke-width: 0.2px;
             cursor: pointer;
+            -webkit-vector-effect: non-scaling-stroke;
             vector-effect: non-scaling-stroke;
         }
 
@@ -2105,11 +2105,24 @@
                 p.onclick = (e) => {
                     if (!isDragging && isGameActive) handleMapClick(e.target);
                 };
-                // Mobil dokunma
+                // Mobil dokunma - iOS WebKit için düzeltilmiş
                 p.ontouchend = (e) => {
                     if (!isDragging && isGameActive) {
                         e.preventDefault();
-                        handleMapClick(e.target);
+                        // iOS'ta e.target bazen yanlış element veriyor
+                        // changedTouches kullanarak doğru elementi bul
+                        const touch = e.changedTouches[0];
+                        if (touch) {
+                            const targetEl = document.elementFromPoint(touch.clientX, touch.clientY);
+                            if (targetEl && targetEl.tagName === 'path') {
+                                handleMapClick(targetEl);
+                            } else {
+                                // Fallback: orijinal target
+                                handleMapClick(e.target);
+                            }
+                        } else {
+                            handleMapClick(e.target);
+                        }
                     }
                 };
             });
