@@ -2092,33 +2092,19 @@
         }
 
         function refreshMapEvents(svg) {
-            // Önce eski eventleri temizlemek için klonlama yapılabilir ama 
-            // basitçe tekrar atamak yeterli olacaktır çünkü onclick üzerine yazıyoruz.
-            svg.querySelectorAll('g#features path').forEach(p => {
-                // Masaüstü tıklama
-                p.onclick = (e) => {
+            // V2 çalışan yöntem: addEventListener + .land seçicisi
+            svg.querySelectorAll('g#features path, .land').forEach(p => {
+                // Click event (Masaüstü)
+                p.addEventListener('click', (e) => {
                     if (!isDragging && isGameActive) handleMapClick(e.target);
-                };
-                // Mobil dokunma - iOS WebKit için düzeltilmiş
-                p.ontouchend = (e) => {
+                });
+                // Touchend event (Mobil)
+                p.addEventListener('touchend', (e) => {
                     if (!isDragging && isGameActive) {
                         e.preventDefault();
-                        // iOS'ta e.target bazen yanlış element veriyor
-                        // changedTouches kullanarak doğru elementi bul
-                        const touch = e.changedTouches[0];
-                        if (touch) {
-                            const targetEl = document.elementFromPoint(touch.clientX, touch.clientY);
-                            if (targetEl && targetEl.tagName === 'path') {
-                                handleMapClick(targetEl);
-                            } else {
-                                // Fallback: orijinal target
-                                handleMapClick(e.target);
-                            }
-                        } else {
-                            handleMapClick(e.target);
-                        }
+                        handleMapClick(e.target);
                     }
-                };
+                });
             });
         }
 
