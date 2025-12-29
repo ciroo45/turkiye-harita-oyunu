@@ -2283,11 +2283,13 @@
                 el.classList.add('wrong');
                 setTimeout(() => el.classList.remove('wrong'), 400);
                 playSound('wrong');
-                navigator.vibrate(200);
 
-                // Hatalı basılan yerin ismini göster
+                // Hatalı basılan yerin ismini göster - ÖNCELİKLİ olarak feedback göster
                 let wrongName = data ? data.n : (el.getAttribute('name') || 'Bilinmiyor');
                 showFeedback(`Hayır! Orası: ${wrongName}`, "#e74c3c");
+
+                // Vibrate - iOS'ta desteklenmiyor, try-catch gerekli
+                try { if (navigator.vibrate) navigator.vibrate(200); } catch (e) { }
             }
         }
 
