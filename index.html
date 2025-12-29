@@ -104,15 +104,14 @@
             height: 100%;
             display: block;
             pointer-events: auto;
-            /* iOS Render Fix */
-            will-change: transform;
+            /* iOS Safari GPU Memory Fix - will-change sadece gerektiğinde */
+            -webkit-transform-origin: center center;
             transform-origin: center center;
             -webkit-backface-visibility: hidden;
             backface-visibility: hidden;
-            -webkit-transform-style: preserve-3d;
-            transform-style: preserve-3d;
+            /* preserve-3d iOS'ta sorun çıkarıyor, kaldırıldı */
             shape-rendering: geometricPrecision;
-            filter: drop-shadow(0px 5px 15px rgba(0, 0, 0, 0.3));
+            /* filter iOS'ta performans sorunu - kaldırıldı */
         }
 
         /* Harita Renkleri */
@@ -125,21 +124,19 @@
             vector-effect: non-scaling-stroke;
         }
 
-        /* Zoom sırasında bulanıklığı önle */
+        /* Zoom sırasında bulanıklığı önle - iOS Safari optimized */
         #world-map-svg,
         #map-container svg {
             image-rendering: -webkit-optimize-contrast;
             image-rendering: crisp-edges;
             shape-rendering: geometricPrecision;
-            will-change: auto;
+            /* will-change kaldırıldı - iOS GPU memory leak önlemi */
         }
 
         /* Zoom animasyonu sırasında geçişleri devre dışı bırak */
-        #map-container.zooming svg {
-            transition: none !important;
-        }
-
+        #map-container.zooming svg,
         #map-container.zooming g#features path {
+            -webkit-transition: none !important;
             transition: none !important;
         }
 
@@ -467,34 +464,32 @@
             font-size: clamp(0.7rem, 2.5vw, 0.85rem);
         }
 
-        /* Feedback Overlay - iOS Safari GARANTI */
+        /* Feedback Overlay - iOS Safari Ultimate Fix */
+        /* iOS Safari'de position:fixed + transform sorunlu, farklı yaklaşım */
         #feedback-overlay {
+            display: none;
             position: fixed !important;
-            top: 50% !important;
-            left: 50% !important;
-            transform: translate(-50%, -50%) !important;
-            -webkit-transform: translate(-50%, -50%) !important;
-            background: #e74c3c !important;
+            top: 50vh !important;
+            left: 50vw !important;
+            margin-left: -150px !important;
+            margin-top: -30px !important;
+            width: 300px !important;
+            background: #c0392b !important;
             color: #fff !important;
-            padding: 20px 40px !important;
-            border-radius: 25px !important;
-            font-size: 18px !important;
-            font-weight: 900 !important;
+            padding: 18px 24px !important;
+            border-radius: 20px !important;
+            font-size: 17px !important;
+            font-weight: 800 !important;
             pointer-events: none !important;
-            visibility: hidden;
-            opacity: 0;
             z-index: 999999 !important;
-            border: 3px solid #fff !important;
-            white-space: nowrap !important;
+            border: 4px solid #fff !important;
             text-align: center !important;
-            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.9) !important;
-            -webkit-transition: opacity 0.3s, visibility 0.3s;
-            transition: opacity 0.3s, visibility 0.3s;
+            box-shadow: 0 8px 30px rgba(0, 0, 0, 0.8) !important;
+            /* iOS için animasyon yok - doğrudan göster/gizle */
         }
 
-        #feedback-overlay.show {
-            visibility: visible !important;
-            opacity: 1 !important;
+        #feedback-overlay.active {
+            display: block !important;
         }
 
         #info-toast {
@@ -2201,8 +2196,8 @@
                 currentTranslate = { x: 0, y: 0 };
             }
 
-            // Maksimum zoom sınırı - Belçika gibi küçük ülkeleri görebilmek için yüksek
-            const maxZoom = 20; // Mobil için yüksek zoom
+            // iOS WebKit GPU memory limit - daha düşük zoom
+            const maxZoom = 10;
             if (currentScale > maxZoom) currentScale = maxZoom;
 
             updateTransform(svg);
@@ -2219,9 +2214,11 @@
             currentTranslate.x = Math.max(-maxTranslateX, Math.min(maxTranslateX, currentTranslate.x));
             currentTranslate.y = Math.max(-maxTranslateY, Math.min(maxTranslateY, currentTranslate.y));
 
-            // Her iki harita için CSS transform kullan (tıklama sorununu önler)
-            // GPU hızlandırma için translate3d kullan
-            svg.style.transform = `translate3d(${currentTranslate.x}px, ${currentTranslate.y}px, 0) scale(${currentScale})`;
+            // iOS WebKit için: translate3d yerine translate kullan (daha stabil)
+            const transformValue = `translate(${currentTranslate.x}px, ${currentTranslate.y}px) scale(${currentScale})`;
+            svg.style.webkitTransform = transformValue;
+            svg.style.transform = transformValue;
+            svg.style.webkitTransformOrigin = 'center center';
             svg.style.transformOrigin = 'center center';
         }
 
@@ -2361,25 +2358,19 @@
         }
 
         function showFeedback(text, color) {
-            // iOS Safari'de overlay görünmüyorsa alert kullan
-            const isIOS = /iPhone|iPad|iPod/.test(navigator.userAgent);
+            const overlay = document.getElementById('feedback-overlay');
+            if (!overlay) return;
 
-            if (isIOS) {
-                // iOS için native alert - GARANTİ ÇALIŞIR
-                setTimeout(() => alert(text), 100);
-            } else {
-                // Diğer cihazlar için overlay
-                const overlay = document.getElementById('feedback-overlay');
-                if (overlay) {
-                    overlay.textContent = text;
-                    overlay.style.visibility = 'visible';
-                    overlay.style.opacity = '1';
-                    setTimeout(() => {
-                        overlay.style.visibility = 'hidden';
-                        overlay.style.opacity = '0';
-                    }, 2000);
-                }
-            }
+            // Text'i ayarla
+            overlay.textContent = text;
+
+            // display: block ile göster (iOS WebKit için en güvenilir yöntem)
+            overlay.classList.add('active');
+
+            // 2 saniye sonra gizle
+            setTimeout(() => {
+                overlay.classList.remove('active');
+            }, 2000);
         }
 
         function showToast(id) {
