@@ -465,31 +465,25 @@
         }
 
         /* Feedback Overlay - iOS Safari Ultimate Fix */
-        /* iOS Safari'de position:fixed + transform sorunlu, farklı yaklaşım */
+        /* display kontrolü JavaScript'te yapılıyor */
         #feedback-overlay {
-            display: none;
-            position: fixed !important;
-            top: 50vh !important;
-            left: 50vw !important;
-            margin-left: -150px !important;
-            margin-top: -30px !important;
-            width: 300px !important;
-            background: #c0392b !important;
-            color: #fff !important;
-            padding: 18px 24px !important;
-            border-radius: 20px !important;
-            font-size: 17px !important;
-            font-weight: 800 !important;
-            pointer-events: none !important;
-            z-index: 999999 !important;
-            border: 4px solid #fff !important;
-            text-align: center !important;
-            box-shadow: 0 8px 30px rgba(0, 0, 0, 0.8) !important;
-            /* iOS için animasyon yok - doğrudan göster/gizle */
-        }
-
-        #feedback-overlay.active {
-            display: block !important;
+            position: fixed;
+            top: 50vh;
+            left: 50vw;
+            margin-left: -150px;
+            margin-top: -30px;
+            width: 300px;
+            background: #c0392b;
+            color: #fff;
+            padding: 18px 24px;
+            border-radius: 20px;
+            font-size: 17px;
+            font-weight: 800;
+            pointer-events: none;
+            z-index: 999999;
+            border: 4px solid #fff;
+            text-align: center;
+            box-shadow: 0 8px 30px rgba(0, 0, 0, 0.8);
         }
 
         #info-toast {
@@ -634,7 +628,7 @@
         </div>
     </div>
 
-    <div id="feedback-overlay"></div>
+    <div id="feedback-overlay" style="display:none;"></div>
     <div id="info-toast">🔍 Bilgileri Gör</div>
 
     <div id="info-modal" onclick="this.style.display='none'">
@@ -2372,18 +2366,23 @@
 
         function showFeedback(text, color) {
             const overlay = document.getElementById('feedback-overlay');
-            if (!overlay) return;
+            if (!overlay) {
+                console.log('Feedback overlay bulunamadı!');
+                return;
+            }
+
+            console.log('showFeedback çağrıldı:', text);
 
             // Text'i ayarla
             overlay.textContent = text;
 
-            // display: block ile göster (iOS WebKit için en güvenilir yöntem)
-            overlay.classList.add('active');
+            // iOS WebKit için: class yerine doğrudan style kullan
+            overlay.style.display = 'block';
 
-            // 2 saniye sonra gizle
+            // 2.5 saniye sonra gizle
             setTimeout(() => {
-                overlay.classList.remove('active');
-            }, 2000);
+                overlay.style.display = 'none';
+            }, 2500);
         }
 
         function showToast(id) {
